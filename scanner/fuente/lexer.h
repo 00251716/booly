@@ -1,20 +1,14 @@
-#ifndef GUARD_lexer_h
-#define GUARD_lexer_h
+#include "parametros.h"
 
-#include <iostream>
-#include <string>
-#include "token.h"
+extern char *lexpal[MAXPAL];
 
-class Lexer {
+enum simbolo{null_tk,op_plus,op_less,op_per,op_bar,op_exp,popen,pclose,cont_inst,end_inst,	op_assign,
+				if_tk,else_tk,elsif_tk,int_tk,float_tk,char_tk,str_tk,bool_tk,for_tk,while_tk,do_tk,
+				in_tk,out_tk,abs_tk,max_tk,min_tk,sqrt_tk,len_tk,subst_tk,pow_tk,charat_tk,sort_tk,
+				random_tk,ident,number,lessl,morer};
 
-  private:
-    int currentPosition;
-    char currentChar;
-    std::string currentText;
+extern enum simbolo token;
 
-  public:
+extern enum simbolo tokpal [MAXPAL];
 
-    Token getToken();
-};
-
-#endif
+extern enum simbolo espec[255] ;

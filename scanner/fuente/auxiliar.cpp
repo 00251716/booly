@@ -1,3 +1,8 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "auxiliar.h"
+#include "lexer.h"
+
   int error(int no)
   {
   printf ("\n^ Error %d: Este numero es demasiado grande",no);

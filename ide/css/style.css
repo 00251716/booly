@@ -9,3 +9,20 @@
 #my-diagram {
     flex: 3;
 }
+
+.inspector {
+  display: inline-block;
+  font: bold 14px helvetica, sans-serif;
+  /*background-color: #212121; /* Grey 900 */
+  color: #212121; /* Grey 100 */
+  cursor: default;
+}
+
+.inspector table {
+  border-collapse: separate;
+  border-spacing: 2px;
+}
+
+.inspector td, th {
+  padding: 2px;
+}

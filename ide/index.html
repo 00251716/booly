@@ -14,6 +14,27 @@
         <div class="d-flex flex-row" id="main-container">
             <div id="my-palette" class="border border-dark mx-2"></div>
             <div id="my-diagram" class="border border-dark mx-2"></div>
+
+            <!-- Properties editor modal -->
+            <div class="modal fade" id="contextMenu" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Properties</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                    <div id="myInspectorDiv" class="inspector"> </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button id="updateButton" type="button" class="btn btn-success" data-dismiss="modal" >Ok</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
         </div>
     </div>
 
@@ -22,5 +43,6 @@
     <script src="js/go-debug.js"></script>
     <script src="js/figures.js"></script>
     <script src="js/diagram.js"></script>
+    <script src="js/DataInspector.js"></script>
 </body>
 </html>

@@ -61,6 +61,7 @@ function init() {
 
     initPalette(gojs);
     initDiagram(gojs);
+    initInspector();
 }
 
 /**
@@ -138,14 +139,14 @@ function initPalette(gojs) {
 	);
 
     myPalette.model.nodeDataArray = [
-        { key: "declare", category: categories.DECLARE, text: "Declare"},
-		{ key: "assignment", category: categories.ASSIGNMENT, text: "Assignment" },
-		{ key: "input", category: categories.INPUT, text: "Input"},
-		{ key: "output", category: categories.OUTPUT, text: "Output"},
-		{ key: "if", category: categories.IF, text: "If" },
-		{ key: "for", category: categories.FOR, text: "For" },
-		{ key: "while", category: categories.WHILE, text: "While" },
-		{ key: "doWhile", category: categories.DOWHILE, text: "Do While" }
+        { key: "declare", category: categories.DECLARE, text: "Declare", text: "Declare", variable:"", type:"Integer", array:"false"},
+		{ key: "assignment", category: categories.ASSIGNMENT, text: "Assignment", variable:"", expression:""},
+		{ key: "input", category: categories.INPUT, text: "Input", variable:""},
+		{ key: "output", category: categories.OUTPUT, text: "Output", expression:""},
+		{ key: "if", category: categories.IF, text: "If", condition:""},
+		{ key: "for", category: categories.FOR, text: "For", variable:"", startValue:"", endValue:"", direction:"Asc", step:""},
+		{ key: "while", category: categories.WHILE, text: "While",  condition:""},
+		{ key: "doWhile", category: categories.DOWHILE, text: "Do While",  condition:""}
     ];
 }
 
@@ -236,8 +237,21 @@ function initDiagram(gojs) {
         }
     )
 
-    
+   	// Definition of bootstrap modal as context menu
+	var cxElement = document.getElementById("contextMenu");
 
+	var myContextMenu = gojs(go.HTMLInfo, {
+		show: showContextMenu,
+		hide: hideContextMenu
+	});
+
+	// We don't want the div acting as a context menu to have a (browser) context menu!
+	cxElement.addEventListener("contextmenu", function(e) {
+		e.preventDefault();
+		return false;
+	}, false);
+    
+    //Create nodes templates that actually shows in the diagram 
     myDiagram.nodeTemplateMap.add(categories.START,
 		gojs(go.Node, "Auto",
 			{
@@ -274,41 +288,47 @@ function initDiagram(gojs) {
 
     myDiagram.nodeTemplateMap.add(categories.DECLARE,
 		gojs(go.Node, "Auto", simpleInstructionProperties,
+			{ contextMenu: myContextMenu },
 			gojs(go.Shape, "InternalStorage",
 				{ strokeWidth: 1, width: 120, height: 40, fill: colors.DECLARE }),
-			gojs(go.TextBlock, fontProperties, new go.Binding("text").makeTwoWay())
+			gojs(go.TextBlock, fontProperties, new go.Binding("text","",declareText).makeTwoWay())
 		)
 	);
 
     myDiagram.nodeTemplateMap.add(categories.ASSIGNMENT,
 		gojs(go.Node, "Auto", simpleInstructionProperties,
+			{ contextMenu: myContextMenu },
 			gojs(go.Shape, "Rectangle", 
 				{  strokeWidth: 1, width: 120, height: 40, fill: colors.ASSIGNMENT  }),
-			gojs(go.TextBlock,  fontProperties, new go.Binding("text").makeTwoWay())
+			gojs(go.TextBlock,  fontProperties, new go.Binding("text","",assignText).makeTwoWay())
 	));
 
 	myDiagram.nodeTemplateMap.add(categories.INPUT,
 		gojs(go.Node, "Auto", simpleInstructionProperties,
+			{ contextMenu: myContextMenu },
 			gojs(go.Shape, "Parallelogram",
 				{ strokeWidth: 1, width: 120, height: 40, fill: colors.INPUT }),
-			gojs(go.TextBlock, fontProperties, new go.Binding("text").makeTwoWay())
+			gojs(go.TextBlock, fontProperties, new go.Binding("text","",inputText).makeTwoWay())
 		)
 	);
 
 	myDiagram.nodeTemplateMap.add(categories.OUTPUT,
 		gojs(go.Node, "Auto", simpleInstructionProperties,
+			{ contextMenu: myContextMenu },
 			gojs(go.Shape, "Parallelogram",
 				{ strokeWidth: 1, width: 120, height: 40, fill: colors.OUTPUT }),
-			gojs(go.TextBlock, fontProperties, new go.Binding("text").makeTwoWay())
+			gojs(go.TextBlock, fontProperties, new go.Binding("text","",outputText).makeTwoWay())
 		)
     );
     
     myDiagram.nodeTemplateMap.add(categories.IF,
 		gojs(go.Node, "Spot",
 			gojs(go.Panel, "Auto",
+				{ contextMenu: myContextMenu },
 				gojs(go.Shape, "Diamond", 
 					{ strokeWidth: 1, width: 80, height: 40, fill: colors.IF }),
-				gojs(go.TextBlock, fontProperties, new go.Binding("text").makeTwoWay())
+				gojs(go.TextBlock, fontProperties, 
+					new go.Binding("text","",conditionText).makeTwoWay())
 			),
 			gojs(go.Shape, "Circle",
 				{ portId: "Left", fromSpot: go.Spot.Left, stroke: null,
@@ -330,23 +350,23 @@ function initDiagram(gojs) {
     )
     
     myDiagram.nodeTemplateMap.add(categories.FOR,
-		gojs(go.Node, "Auto", commonNodeProperties,
+		gojs(go.Node, "Auto", commonNodeProperties, { contextMenu: myContextMenu },
 			gojs(go.Shape, "Hexagon", loopShapeProperties),
-			gojs(go.TextBlock, fontProperties, new go.Binding("text").makeTwoWay())
+			gojs(go.TextBlock, fontProperties, new go.Binding("text","",forsyText).makeTwoWay())
 		)
 	);
 
 	myDiagram.nodeTemplateMap.add(categories.WHILE,
-		gojs(go.Node, "Auto", commonNodeProperties,
+		gojs(go.Node, "Auto", commonNodeProperties, { contextMenu: myContextMenu },
 			gojs(go.Shape, "Hexagon", loopShapeProperties),
-			gojs(go.TextBlock, fontProperties, new go.Binding("text").makeTwoWay())
+			gojs(go.TextBlock, fontProperties, new go.Binding("text","",conditionText).makeTwoWay())
 		)
 	);
 
 	myDiagram.nodeTemplateMap.add(categories.DOWHILE,
-		gojs(go.Node, "Auto", commonNodeProperties,
+		gojs(go.Node, "Auto", commonNodeProperties, { contextMenu: myContextMenu },
 			gojs(go.Shape, "Hexagon", loopShapeProperties),
-			gojs(go.TextBlock, fontProperties, new go.Binding("text").makeTwoWay())
+			gojs(go.TextBlock, fontProperties, new go.Binding("text","",conditionText).makeTwoWay())
 		)
 	);
     
@@ -392,4 +412,41 @@ function initDiagram(gojs) {
           e.diagram.commandHandler.deleteSelection();
         }
 	});
+
+}
+
+
+function initInspector(){
+	var inspector = new Inspector('myInspectorDiv', myDiagram,
+		{
+			// disallows for multiple nodes to be inspected at once
+			multipleSelection: false,
+			// uncomment this line to only inspect the named properties below instead of all properties on each object:
+			includesOwnProperties: false,
+			properties: {
+				// an example of specifying the <input> type
+				"variable" : {show: Inspector.showIfPresent, type:'text'},
+				"condition" : {show: Inspector.showIfPresent, type:'text'},
+				"expression" : {show: Inspector.showIfPresent, type:'text'},
+				"startValue" : {show: Inspector.showIfPresent, type:'text'},
+				"endValue" : {show: Inspector.showIfPresent, type:'text'},
+				"type": {
+					show: Inspector.showIfPresent,
+					type: "select",
+					choices: function(node, propName) {
+						if (Array.isArray(node.data.choices)) return node.data.choices;
+						return ["Integer", "String", "Character", "Boolean"];
+					}
+				},
+				"direction": {
+					show: Inspector.showIfPresent,
+					type: "select",
+					choices: function(node, propName) {
+						if (Array.isArray(node.data.choices)) return node.data.choices;
+						return ["Asc", "Desc"];
+					}
+				},
+				"step" : {show: Inspector.showIfPresent, type:'number'}
+			}
+		});
 }

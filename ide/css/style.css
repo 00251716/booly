@@ -1,0 +1,11 @@
+#main-container {
+    height: 800px;
+}
+
+#my-palette {
+    flex: 1;
+}
+
+#my-diagram {
+    flex: 3;
+}

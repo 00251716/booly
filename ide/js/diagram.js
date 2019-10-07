@@ -319,7 +319,11 @@ function initDiagram(gojs) {
                 }
             });
             linkIntoNode.toNode = nextNode;
-        } else {
+        } else if (node.category === categories.WHILE || node.category === categories.FOR) {
+            let oldLink = node.findLinksInto().filter(link => { return link.toPort !== "TrueEnd" } ).first();
+            let nextNode = node.findLinksOutOf().filter(link => { return link.fromPort !== "TrueFor" }).first().toNode;
+            oldLink.toNode = nextNode;
+        } else  {
             exciseNode(node);
         }
     }

@@ -144,11 +144,11 @@ function JSONtoCompiler(){
 			case categories.IF:
 			jsontext+="if ("+node.condition+")"+"\n";
 				//true path
-				var leftLink = links.find(elem => elem.from == node.key && elem.side == "Left");
+				var leftLink = links.find(elem => elem.from == node.key && elem.fromPort == "Left");
 				nextnode = nodes.find(elem => elem.key == leftLink.to);
 				boolyPrint(nextnode,false);
 				//false path
-				var rightLink = links.find(elem => elem.from == node.key && elem.side == "Right");
+				var rightLink = links.find(elem => elem.from == node.key && elem.fromPort == "Right");
 				nextnode = nodes.find(elem => elem.key == rightLink.to);
 				if (nextnode.category !== categories.ENDIF){
 					jsontext+="else "+"\n";

@@ -228,7 +228,8 @@ function initDiagram(gojs) {
     myDiagram = gojs(go.Diagram, "my-diagram",
         {
             initialAutoScale: go.Diagram.UniformToFill,
-			layout: gojs(go.LayeredDigraphLayout, { direction: 90, setsPortSpots: false } ),
+			layout: gojs(go.LayeredDigraphLayout, { direction: 90, setsPortSpots: false,
+				layeringOption: go.LayeredDigraphLayout.LayerLongestPathSource, columnSpacing: 45}),
 			// Funcion que se ejecuta mientras se borra un nodo del diagrama
 			SelectionDeleting: function(e) {
 				exciseNode(e.subject.first()) // Deletes a node and its children

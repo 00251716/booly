@@ -6,7 +6,8 @@
 %option outfile="Scanner.cpp"
 %option noyywrap
 
-begin_tk		"begin"
+begin_tk		begin
+end_tk			end
 digit_tk 		[0-9]
 char_tk 		[a-zA-ZñÑ] 
 type_tk		inty|chary|stringy|booly
@@ -15,6 +16,7 @@ endif_tk		endif
 else_tk		else
 elsif_tk		elsif
 for_tk			forsy
+endfor_tk		endforsy
 while_tk		whiley
 do_tk			doey
 in_tk			inny
@@ -43,13 +45,15 @@ sort_tk		sorty
 rand_tk		randy
 odd_tk			oddy
 even_tk		even
-end_tk			end
 
 %%
 
 {begin_tk}		{std::cout << "begin_tk: " << yytext << std::endl;}
+{end_tk}		{std::cout << "end_tk: " << yytext << std::endl;}
 {type_tk}		{std::cout << "type_tk: " << yytext << std::endl;}
 {if_tk}		{std::cout << "if_tk: " << yytext << std::endl;}
+{for_tk}		{std::cout << "for_tk: " << yytext << std::endl;}
+{endforsy_tk}		{std::cout << "endfor_tk: " << yytext << std::endl;}
 {else_tk}		{std::cout << "else_tk: " << yytext << std::endl;}
 {endif_tk}		{std::cout << "endif_tk: " << yytext << std::endl;}
 {popen_tk}		{std::cout << "popen_tk: " << yytext << std::endl;}

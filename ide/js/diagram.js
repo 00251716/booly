@@ -139,7 +139,7 @@ function initPalette(gojs) {
 	);
 
     myPalette.model.nodeDataArray = [
-        { key: "declare", category: categories.DECLARE, text: "Declare", text: "Declare", variable:"", type:"Integer", array:"false"},
+        { key: "declare", category: categories.DECLARE, text: "Declare", text: "Declare", variable:"", type:"Integer", array:false},
 		{ key: "assignment", category: categories.ASSIGNMENT, text: "Assignment", variable:"", expression:""},
 		{ key: "input", category: categories.INPUT, text: "Input", variable:""},
 		{ key: "output", category: categories.OUTPUT, text: "Output", expression:""},
@@ -439,6 +439,7 @@ function initInspector(){
 						return ["Integer", "String", "Character", "Boolean"];
 					}
 				},
+				"array": {show: Inspector.showIfPresent, type:'checkbox'},
 				"direction": {
 					show: Inspector.showIfPresent,
 					type: "select",

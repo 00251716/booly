@@ -47,6 +47,33 @@ function outputText(info) {
 	return str;
 }
 
+function download(filename, text) {
+    var element = document.createElement('a');
+    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+    element.setAttribute('download', filename);
+
+    element.style.display = 'none';
+    document.body.appendChild(element);
+
+    element.click();
+
+    document.body.removeChild(element);
+}
+
+document.getElementById("dwn-btn").addEventListener("click", function(){
+    // Generate download of hello.txt file with some content
+    var filename = "myDiagram.bly";
+    
+    download(filename, myDiagram.model.toJSON());
+}, false);
+
+document.getElementById("cmp-btn").addEventListener("click", function(){
+    // Generate download of hello.txt file with some content
+    var filename = "myDiagram.txt";
+    
+    download(filename, JSONtoCompiler());
+}, false);
+
 //Show and hide properties modal
 function showContextMenu(){
 	$('#contextMenu').modal('show'); 
@@ -57,6 +84,7 @@ function hideContextMenu(){
 }
 
 function JSONtoCompiler(){
+	var jsontext = "";
 	var object = eval('('+myDiagram.model.toJSON()+')');
 	var links = object.linkDataArray;
 	var nodes = object.nodeDataArray;
@@ -72,35 +100,35 @@ function JSONtoCompiler(){
 		var nextnode;
 		switch(node.category){
 			case categories.DECLARE:
-				console.log(node.type + " " + node.variable + (node.array ? "[]" : ""));
+				jsontext+=node.type + " " + node.variable + (node.array ? "[]" : "")+"\n";
 				var nextLink = links.find(elem => elem.from == node.key);
 					nextnode = nodes.find(elem => elem.key == nextLink.to);
 					boolyPrint(nextnode, path);
 			break;
 
 			case categories.ASSIGNMENT:
-				console.log(node.variable + " = " + node.expression);
+			jsontext+=node.variable + " = " + node.expression+"\n";
 				var nextLink = links.find(elem => elem.from == node.key);
 					nextnode = nodes.find(elem => elem.key == nextLink.to);
 					boolyPrint(nextnode, path);
 			break;
 
 			case categories.INPUT:
-				console.log("input " + node.variable);
+			jsontext+="input " + node.variable+"\n";
 				var nextLink = links.find(elem => elem.from == node.key);
 					nextnode = nodes.find(elem => elem.key == nextLink.to);
 					boolyPrint(nextnode, path);
 			break;
 
 			case categories.OUTPUT:
-				console.log("output " + node.expression);
+			jsontext+="output " + node.expression+"\n";
 				var nextLink = links.find(elem => elem.from == node.key);
 					nextnode = nodes.find(elem => elem.key == nextLink.to);
 					boolyPrint(nextnode, path);
 			break;
 
 			case categories.IF:
-				console.log("if ("+node.condition+")");
+			jsontext+="if ("+node.condition+")"+"\n";
 				//true path
 				var leftLink = links.find(elem => elem.from == node.key && elem.side == "Left");
 				nextnode = nodes.find(elem => elem.key == leftLink.to);
@@ -109,13 +137,13 @@ function JSONtoCompiler(){
 				var rightLink = links.find(elem => elem.from == node.key && elem.side == "Right");
 				nextnode = nodes.find(elem => elem.key == rightLink.to);
 				if (nextnode.category !== categories.ENDIF){
-					console.log("else ");
+					jsontext+="else "+"\n";
 					boolyPrint(nextnode,true);
 				}
 			break;
 
 			case categories.ENDIF:
-			console.log("endif");
+			jsontext+="endif"+"\n";
 				if(path){
 					var nextLink = links.find(elem => elem.from == node.key);
 					nextnode = nodes.find(elem => elem.key == nextLink.to);
@@ -138,9 +166,11 @@ function JSONtoCompiler(){
 			break;*/
 
 			case categories.END:
-				console.log("END");
+				jsontext+="END"+"\n";
 			break;
-			default: console.log("-");
+			default: jsontext+="-"+"\n";
 		}
 	}
+
+	return jsontext;
 }

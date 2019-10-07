@@ -47,6 +47,7 @@ function outputText(info) {
 	return str;
 }
 
+//Download files function
 function download(filename, text) {
     var element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
@@ -60,19 +61,32 @@ function download(filename, text) {
     document.body.removeChild(element);
 }
 
+function upload(e) {
+  var file = e.target.files[0];
+  if (!file) {
+    return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var contents = e.target.result;
+   	myDiagram.model = go.Model.fromJson(contents);
+  };
+  reader.readAsText(file);
+}
+
+//Set listeners to buttons
 document.getElementById("dwn-btn").addEventListener("click", function(){
-    // Generate download of hello.txt file with some content
     var filename = "myDiagram.bly";
-    
     download(filename, myDiagram.model.toJSON());
 }, false);
 
 document.getElementById("cmp-btn").addEventListener("click", function(){
-    // Generate download of hello.txt file with some content
     var filename = "myDiagram.txt";
-    
     download(filename, JSONtoCompiler());
 }, false);
+
+document.getElementById('load-btn')
+  .addEventListener('change', upload, false);
 
 //Show and hide properties modal
 function showContextMenu(){
@@ -92,7 +106,7 @@ function JSONtoCompiler(){
 	var nextnode = nodes.find(function(elem){
 		return elem.key == links[0].to;
 	});
-
+	jsontext += "begin \n";
 	boolyPrint(nextnode,true);
 
 	function boolyPrint(node, path){
@@ -143,8 +157,8 @@ function JSONtoCompiler(){
 			break;
 
 			case categories.ENDIF:
-			jsontext+="endif"+"\n";
 				if(path){
+					jsontext+="endif"+"\n";
 					var nextLink = links.find(elem => elem.from == node.key);
 					nextnode = nodes.find(elem => elem.key == nextLink.to);
 					boolyPrint(nextnode, path);

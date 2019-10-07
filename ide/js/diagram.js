@@ -40,6 +40,10 @@ const simpleInstructions = [
     categories.INPUT, categories.OUTPUT, categories.DECLARE, categories.ASSIGNMENT
 ]
 
+const loopInstructions = [
+    categories.FOR, categories.WHILE, categories.DOWHILE
+];
+
 const fontProperties = { margin: 5, font: "15px sans-serif" }
 
 const loopShapeProperties = { strokeWidth: 1, width: 40, height: 140, fill: colors.LOOP, angle: 90 };
@@ -153,22 +157,40 @@ function initDiagram(gojs) {
     let simpleInstructionProperties = { locationSpot: go.Spot.Center, fromSpot: go.Spot.Bottom, toSpot: go.Spot.Top }
     let endInstructionProperties = { strokeWidth: 1, width: 20, height: 20 }
     
+    // #region Function declarations
     function dropOntoLink(e, obj) {
         let diagram = e.diagram;
         let newnode = diagram.selection.first();
         if (!(newnode instanceof go.Node) || newnode.linksConnected.count > 0) return;
         let oldlink = obj.part;
         let tonode = oldlink.toNode;
-        oldlink.toNode = newnode;
-        if (simpleInstructions.includes(newnode.category)) {
-            diagram.model.addLinkData({ from: newnode.data.key, to: tonode.data.key })
-        } else {
-            endNodeKey = "end" + newnode.data.key
-            diagram.model.addNodeData({ key: endNodeKey, category: categories.ENDIF, color: colors.IF })
-            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, side: "Left" })
-            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, side: "Right" })
-            diagram.model.addLinkData({ from: endNodeKey, to: tonode.data.key })
+        let nodeCategory = newnode.category;
+        if (nodeCategory !== categories.DOWHILE) {
+            oldlink.toNode = newnode;
         }
+
+        if (simpleInstructions.includes(nodeCategory)) {
+            diagram.model.addLinkData({ from: newnode.data.key, to: tonode.data.key, toPort: oldlink.data.toPort });
+        } else if (nodeCategory === categories.IF) {
+            let endNodeKey = "end" + newnode.data.key
+            diagram.model.addNodeData({ key: endNodeKey, category: categories.ENDIF, color: colors.IF })
+            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: "Left", text: "True", toPort: "True"})
+            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: "Right", text: "False", toPort: "False"})
+            diagram.model.addLinkData({ from: endNodeKey, to: tonode.data.key, toPort: oldlink.data.toPort })
+        } else if (nodeCategory === categories.FOR || nodeCategory === categories.WHILE) {
+            diagram.model.addLinkData({ from: newnode.data.key, to: tonode.data.key, toPort: oldlink.data.toPort});
+            diagram.model.addLinkData({ from: newnode.data.key, to: newnode.data.key, fromPort: "TrueFor", toPort: "TrueEnd" });
+        } else if (nodeCategory === categories.DOWHILE) {
+            let endNodeKey = "end" + newnode.data.key;
+            diagram.startTransaction();
+            diagram.model.addNodeData({ key: endNodeKey, category: categories.ENDDOWHILE, color: colors.LOOP })
+            diagram.commitTransaction("Added enddowhile node");
+            enddo = diagram.findNodeForKey(endNodeKey);
+            oldlink.toNode = enddo;
+            diagram.model.addLinkData({ from: endNodeKey, to: newnode.data.key });
+            diagram.model.addLinkData({ from: newnode.data.key, to: tonode.data.key });
+            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey });
+        } else oldlink.toNode = tonode;
     }
     
     // Draw links between the parent and children nodes of a node being deleted.
@@ -236,12 +258,72 @@ function initDiagram(gojs) {
      * @param {go.Diagram} diagram 
      */
     function deleteDisconnectedNodes(diagram) {
-        let nodesToDelete = diagram.nodes.filter(function(n) { return n.category !== categories.START && n.findLinksInto().count === 0; });
+        let nodesToDelete = diagram.nodes.filter(function(n) { 
+            return n.category !== categories.START && isOnlyComingIntoItself(n)
+        });
         if (nodesToDelete.count > 0) {
             diagram.removeParts(nodesToDelete, false);
             deleteDisconnectedNodes(diagram);
         }
     }
+
+    /**
+     * Verifies if the node has a link coming into it.
+     * Returns true if it is a simple instruction and has no link
+     * or if it is a loop instruction and has one link (from itself).
+     * False otherwise.
+     * @param {go.Node} node 
+     */
+    function isOnlyComingIntoItself(node) {
+        if (loopInstructions.includes(node.category)) {
+            return node.findLinksInto().count == 1;
+        } else  {
+            return node.findLinksInto().count == 0;
+        }
+    }
+
+    function deleteNodeByCategory(node) {
+        if (node.category === categories.ENDIF) {
+            let toNode = node.findNodesOutOf().first();
+            let ifNode = myDiagram.findNodeForKey(node.key.substring(3))
+            let previousLink = ifNode.findLinksInto().first();
+            previousLink.toNode = toNode;
+        } 
+        else if (node.category === categories.DOWHILE) {
+            let endNode = myDiagram.findNodeForKey("end" + node.key);
+            let linkIntoEndNode;
+            endNode.findLinksInto().each((link) => {
+                if (link.data.from !== node.key) {
+                    linkIntoEndNode = link;
+                }
+            });
+            let nextNode;
+            node.findNodesOutOf().each((n) => {
+                if (n !== endNode) {
+                    nextNode = n;
+                }
+            });
+            linkIntoEndNode.toNode = nextNode;
+        } else if (node.category === categories.ENDDOWHILE) {
+            let doWhileNode = myDiagram.findNodeForKey(node.key.substring(3));
+            let linkIntoNode;
+            node.findLinksInto().each((link) => {
+                if (link.data.from !== doWhileNode.key) {
+                    linkIntoNode = link;
+                }
+            });
+            let nextNode;
+            doWhileNode.findNodesOutOf().each((n) => {
+                if (n !== node) {
+                    nextNode = n;
+                }
+            });
+            linkIntoNode.toNode = nextNode;
+        } else {
+            exciseNode(node);
+        }
+    }
+    // #endregion
 
     myDiagram = gojs(go.Diagram, "my-diagram",
         {
@@ -249,7 +331,9 @@ function initDiagram(gojs) {
             layout: gojs(go.LayeredDigraphLayout, { direction: 90, setsPortSpots: false } ),
             // Funcion que se ejecuta mientras se borra un nodo del diagrama
             SelectionDeleting: function(e) {
-                exciseNode(e.subject.first()) // Deletes a node and its children
+                // console.log(e.subject.first().category)
+                // exciseNode(e.subject.first()) // Deletes a node and its children
+                deleteNodeByCategory(e.subject.first())
             },
             selectionDeleted: function(e) {
                 deleteDisconnectedNodes(e.diagram);
@@ -311,7 +395,7 @@ function initDiagram(gojs) {
         gojs(go.Node, "Auto", simpleInstructionProperties,
             { contextMenu: myContextMenu },
             gojs(go.Shape, "InternalStorage",
-                { strokeWidth: 1, width: 120, height: 40, fill: colors.DECLARE }),
+                { strokeWidth: 1, minSize: new go.Size(120, 40), fill: colors.DECLARE }),
             gojs(go.TextBlock, fontProperties, new go.Binding("text","",declareText).makeTwoWay())
         )
     );
@@ -320,7 +404,7 @@ function initDiagram(gojs) {
         gojs(go.Node, "Auto", simpleInstructionProperties,
             { contextMenu: myContextMenu },
             gojs(go.Shape, "Rectangle", 
-                {  strokeWidth: 1, width: 120, height: 40, fill: colors.ASSIGNMENT  }),
+                {  strokeWidth: 1, minSize: new go.Size(120, 40), fill: colors.ASSIGNMENT  }),
             gojs(go.TextBlock,  fontProperties, new go.Binding("text","",assignText).makeTwoWay())
     ));
 
@@ -328,7 +412,7 @@ function initDiagram(gojs) {
         gojs(go.Node, "Auto", simpleInstructionProperties,
             { contextMenu: myContextMenu },
             gojs(go.Shape, "Parallelogram",
-                { strokeWidth: 1, width: 120, height: 40, fill: colors.INPUT }),
+                { strokeWidth: 1, minSize: new go.Size(120, 40), fill: colors.INPUT }),
             gojs(go.TextBlock, fontProperties, new go.Binding("text","",inputText).makeTwoWay())
         )
     );
@@ -337,7 +421,7 @@ function initDiagram(gojs) {
         gojs(go.Node, "Auto", simpleInstructionProperties,
             { contextMenu: myContextMenu },
             gojs(go.Shape, "Parallelogram",
-                { strokeWidth: 1, width: 120, height: 40, fill: colors.OUTPUT }),
+                { strokeWidth: 1, minSize: new go.Size(120, 40), fill: colors.OUTPUT }),
             gojs(go.TextBlock, fontProperties, new go.Binding("text","",outputText).makeTwoWay())
         )
     );
@@ -345,10 +429,10 @@ function initDiagram(gojs) {
     myDiagram.nodeTemplateMap.add(categories.IF,
         gojs(go.Node, "Spot", { toSpot: go.Spot.Top, locationSpot: go.Spot.Center },
             gojs(go.Panel, "Auto",
-                { contextMenu: myContextMenu  },
+                { contextMenu: myContextMenu},
                 gojs(go.Shape, "Diamond", 
-                    { strokeWidth: 1, width: 80, height: 40, fill: colors.IF }),
-                gojs(go.TextBlock, fontProperties, 
+                    { strokeWidth: 1, fill: colors.IF, minSize: new go.Size(80, 40) }),
+                gojs(go.TextBlock, fontProperties,
                     new go.Binding("text","",conditionText).makeTwoWay())
             ),
             gojs(go.Shape, "Circle",
@@ -363,33 +447,75 @@ function initDiagram(gojs) {
             )
         )
     );
-    
+
     myDiagram.nodeTemplateMap.add(categories.ENDIF,
-        gojs(go.Node, "Auto", commonNodeProperties, { toSpot: go.Spot.LeftRightSides, fromSpot: go.Spot.Bottom },
+        gojs(go.Node, "Spot", commonNodeProperties, { fromSpot: go.Spot.Bottom },
             gojs(go.Shape, "Circle", endInstructionProperties, new go.Binding("fill", "color")),
+            gojs(go.Shape, "Circle",
+                { portId: "True", toSpot: go.Spot.Left, stroke: null,
+                alignment: go.Spot.Left, alignmentFocus: go.Spot.Left,
+                fill: null, width: 1, height: 1 }
+            ),
+            gojs(go.Shape, "Circle",
+                { portId: "False", toSpot: go.Spot.Right, stroke: null,
+                alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
+                fill: null, width: 1, height: 1 }
+            )
         )
     )
-    
+
     myDiagram.nodeTemplateMap.add(categories.FOR,
-        gojs(go.Node, "Auto", commonNodeProperties, { contextMenu: myContextMenu },
-            gojs(go.Shape, "Hexagon", loopShapeProperties),
-            gojs(go.TextBlock, fontProperties, new go.Binding("text","",forsyText).makeTwoWay())
+        gojs(go.Node, "Spot", { locationSpot: go.Spot.Center, fromSpot: go.Spot.Bottom, toSpot: go.Spot.Top },
+            gojs(go.Panel, "Auto",
+                { contextMenu: myContextMenu },
+                gojs(go.Shape, "Hexagon", loopShapeProperties),
+                gojs(go.TextBlock, fontProperties, new go.Binding("text","",forsyText).makeTwoWay()),
+                gojs(go.Shape, "Circle",
+                    { portId: "TrueEnd", toSpot: go.Spot.BottomRight, stroke: null,
+                    alignment: go.Spot.BottomRight, alignmentFocus: go.Spot.BottomRight,
+                    fill: null, width: 1, height: 1 }
+                )
+            ),
+            gojs(go.Shape, "Circle",
+                { portId: "TrueFor", fromSpot: go.Spot.Right, stroke: null,
+                alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
+                fill: null, width: 1, height: 1 }
+            )
         )
     );
 
     myDiagram.nodeTemplateMap.add(categories.WHILE,
-        gojs(go.Node, "Auto", commonNodeProperties, { contextMenu: myContextMenu },
+        gojs(go.Node, "Spot", { locationSpot: go.Spot.Center, fromSpot: go.Spot.Bottom, toSpot: go.Spot.Top },
+            gojs(go.Panel, "Auto",
+                { contextMenu: myContextMenu },
+                gojs(go.Shape, "Hexagon", loopShapeProperties),
+                gojs(go.TextBlock, fontProperties, new go.Binding("text","",conditionText).makeTwoWay()),
+                gojs(go.Shape, "Circle",
+                    { portId: "TrueEnd", toSpot: go.Spot.BottomRight, stroke: null,
+                    alignment: go.Spot.BottomRight, alignmentFocus: go.Spot.BottomRight,
+                    fill: null, width: 1, height: 1 }
+                )
+            ),
+            gojs(go.Shape, "Circle",
+                { portId: "TrueFor", fromSpot: go.Spot.Right, stroke: null,
+                alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
+                fill: null, width: 1, height: 1 }
+            )
+        )
+    );
+
+    myDiagram.nodeTemplateMap.add(categories.DOWHILE,
+        gojs(go.Node, "Auto", commonNodeProperties, { contextMenu: myContextMenu, fromSpot: go.Spot.BottomRightSides, toSpot: go.Spot.Top },
             gojs(go.Shape, "Hexagon", loopShapeProperties),
             gojs(go.TextBlock, fontProperties, new go.Binding("text","",conditionText).makeTwoWay())
         )
     );
 
-    myDiagram.nodeTemplateMap.add(categories.DOWHILE,
-        gojs(go.Node, "Auto", commonNodeProperties, { contextMenu: myContextMenu },
-            gojs(go.Shape, "Hexagon", loopShapeProperties),
-            gojs(go.TextBlock, fontProperties, new go.Binding("text","",conditionText).makeTwoWay())
+    myDiagram.nodeTemplateMap.add(categories.ENDDOWHILE,
+        gojs(go.Node, "Auto", commonNodeProperties, { toSpot: go.Spot.TopRightSides, fromSpot: go.Spot.Bottom, toMaxLinks: 2 },
+            gojs(go.Shape, "Circle", endInstructionProperties, new go.Binding("fill", "color")),
         )
-    );
+    )
     
     myDiagram.model.nodeDataArray = [
         {key: "start", category: categories.START},
@@ -404,7 +530,8 @@ function initDiagram(gojs) {
     myDiagram.findLayer("Tool").opacity = 0.5;
 
     // Property needed to remember portIds  
-    myDiagram.model.linkFromPortIdProperty = "side";
+    myDiagram.model.linkFromPortIdProperty = "fromPort";
+    myDiagram.model.linkToPortIdProperty = "toPort";
 
     // Estableciendo el formato para los links dentro del diagrama
     myDiagram.linkTemplate = gojs(go.Link,
@@ -414,16 +541,25 @@ function initDiagram(gojs) {
             mouseDragEnter: function(e, link) { link.isHighlighted = true; },
             mouseDragLeave: function(e, link) { link.isHighlighted = false; },
             mouseDrop: dropOntoLink,
-            layoutConditions: go.Part.LayoutAdded | go.Part.LayoutRemoved
+            layoutConditions: go.Part.LayoutAdded | go.Part.LayoutRemoved,
+            corner: 4
         },
         gojs(go.Shape, { strokeWidth: 2 },
             new go.Binding("stroke", "isHighlighted", function(h) { return h ? "chartreuse" : "rgb(63,63,63)"; }).ofObject(),
             new go.Binding("strokeWidth", "isHighlighted", function(h) { return h ? 4 : 2; }).ofObject()), // Link shape
         gojs(go.Shape, { toArrow: "Standard" }), // Arrow shape
         gojs(go.Panel,  // link label for conditionals, normally not visible
-            { visible: false, name: "LABEL", segmentIndex: 1, segmentFraction: 0.5 },
+            { visible: false, name: "LABEL", segmentIndex: 0, segmentFraction: 0 },
             new go.Binding("visible", "", function(link) { return link.fromNode.category === categories.IF && !!link.data.text; }).ofObject(),
-            new go.Binding("segmentOffset", "side", function(s) { return s === "Left" ? new go.Point(0, 14) : new go.Point(0, -14); })
+            new go.Binding("segmentOffset", "fromPort", function(s) { return s === "Left" ? new go.Point(0, 15) : new go.Point(0, -15); }),
+            gojs(go.TextBlock,
+                {
+                //   textAlign: "center",
+                  font: "10pt sans-serif",
+                  margin: 5,
+                  editable: false
+                },
+                new go.Binding("text").makeTwoWay())
           )
     );
 

@@ -594,7 +594,7 @@ function initInspector(){
 					type: "select",
 					choices: function(node, propName) {
 						if (Array.isArray(node.data.choices)) return node.data.choices;
-						return ["Integer", "String", "Character", "Boolean"];
+						return ["inty", "stringy", "chary", "booly"];
 					}
 				},
 				"array": {show: Inspector.showIfPresent, type:'checkbox'},

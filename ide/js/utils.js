@@ -114,14 +114,14 @@ function JSONtoCompiler(){
 		var nextnode;
 		switch(node.category){
 			case categories.DECLARE:
-				jsontext+=node.type + " " + node.variable + (node.array ? "[]" : "")+"\n";
+				jsontext+=node.type + " " + node.variable + (node.array ? "[]" : "")+";\n";
 				var nextLink = links.find(elem => elem.from == node.key);
 					nextnode = nodes.find(elem => elem.key == nextLink.to);
 					boolyPrint(nextnode, path);
 			break;
 
 			case categories.ASSIGNMENT:
-			jsontext+=node.variable + " = " + node.expression+"\n";
+			jsontext+=node.variable + " = " + node.expression+";\n";
 				var nextLink = links.find(elem => elem.from == node.key);
 					nextnode = nodes.find(elem => elem.key == nextLink.to);
 					boolyPrint(nextnode, path);
@@ -180,7 +180,7 @@ function JSONtoCompiler(){
 			break;*/
 
 			case categories.END:
-				jsontext+="END"+"\n";
+				jsontext+="end"+"\n";
 			break;
 			default: jsontext+="-"+"\n";
 		}

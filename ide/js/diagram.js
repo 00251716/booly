@@ -137,14 +137,14 @@ function initPalette(gojs) {
     );
 
     myPalette.model.nodeDataArray = [
-        { key: "declare", category: categories.DECLARE, text: "Declare", text: "Declare", variable:"", type:"Integer", array:"false"},
-        { key: "assignment", category: categories.ASSIGNMENT, text: "Assignment", variable:"", expression:""},
-        { key: "input", category: categories.INPUT, text: "Input", variable:""},
-        { key: "output", category: categories.OUTPUT, text: "Output", expression:""},
-        { key: "if", category: categories.IF, text: "If", condition:""},
-        { key: "for", category: categories.FOR, text: "For", variable:"", startValue:"", endValue:"", direction:"Asc", step:""},
-        { key: "while", category: categories.WHILE, text: "While",  condition:""},
-        { key: "doWhile", category: categories.DOWHILE, text: "Do While",  condition:""}
+        { key: "declare", category: categories.DECLARE, text: "Declare", text: "Declare", variable:"", type:"Integer", array:false},
+		{ key: "assignment", category: categories.ASSIGNMENT, text: "Assignment", variable:"", expression:""},
+		{ key: "input", category: categories.INPUT, text: "Input", variable:""},
+		{ key: "output", category: categories.OUTPUT, text: "Output", expression:""},
+		{ key: "if", category: categories.IF, text: "If", condition:""},
+		{ key: "for", category: categories.FOR, text: "For", variable:"", startValue:"", endValue:"", direction:"Asc", step:""},
+		{ key: "while", category: categories.WHILE, text: "While",  condition:""},
+		{ key: "doWhile", category: categories.DOWHILE, text: "Do While",  condition:""}
     ];
 }
 
@@ -246,8 +246,9 @@ function initDiagram(gojs) {
     myDiagram = gojs(go.Diagram, "my-diagram",
         {
             initialAutoScale: go.Diagram.UniformToFill,
-            layout: gojs(go.LayeredDigraphLayout, { direction: 90, setsPortSpots: false } ),
-            // Funcion que se ejecuta mientras se borra un nodo del diagrama
+			layout: gojs(go.LayeredDigraphLayout, { direction: 90, setsPortSpots: false,
+				layeringOption: go.LayeredDigraphLayout.LayerLongestPathSource, columnSpacing: 45}),
+			// Funcion que se ejecuta mientras se borra un nodo del diagrama
             SelectionDeleting: function(e) {
                 exciseNode(e.subject.first()) // Deletes a node and its children
             },
@@ -439,36 +440,37 @@ function initDiagram(gojs) {
 
 
 function initInspector(){
-    var inspector = new Inspector('myInspectorDiv', myDiagram,
-        {
-            // disallows for multiple nodes to be inspected at once
-            multipleSelection: false,
-            // uncomment this line to only inspect the named properties below instead of all properties on each object:
-            includesOwnProperties: false,
-            properties: {
-                // an example of specifying the <input> type
-                "variable" : {show: Inspector.showIfPresent, type:'text'},
-                "condition" : {show: Inspector.showIfPresent, type:'text'},
-                "expression" : {show: Inspector.showIfPresent, type:'text'},
-                "startValue" : {show: Inspector.showIfPresent, type:'text'},
-                "endValue" : {show: Inspector.showIfPresent, type:'text'},
-                "type": {
-                    show: Inspector.showIfPresent,
-                    type: "select",
-                    choices: function(node, propName) {
-                        if (Array.isArray(node.data.choices)) return node.data.choices;
-                        return ["Integer", "String", "Character", "Boolean"];
-                    }
-                },
-                "direction": {
-                    show: Inspector.showIfPresent,
-                    type: "select",
-                    choices: function(node, propName) {
-                        if (Array.isArray(node.data.choices)) return node.data.choices;
-                        return ["Asc", "Desc"];
-                    }
-                },
-                "step" : {show: Inspector.showIfPresent, type:'number'}
-            }
-        });
+	var inspector = new Inspector('myInspectorDiv', myDiagram,
+		{
+			// disallows for multiple nodes to be inspected at once
+			multipleSelection: false,
+			// uncomment this line to only inspect the named properties below instead of all properties on each object:
+			includesOwnProperties: false,
+			properties: {
+				// an example of specifying the <input> type
+				"variable" : {show: Inspector.showIfPresent, type:'text'},
+				"condition" : {show: Inspector.showIfPresent, type:'text'},
+				"expression" : {show: Inspector.showIfPresent, type:'text'},
+				"startValue" : {show: Inspector.showIfPresent, type:'text'},
+				"endValue" : {show: Inspector.showIfPresent, type:'text'},
+				"type": {
+					show: Inspector.showIfPresent,
+					type: "select",
+					choices: function(node, propName) {
+						if (Array.isArray(node.data.choices)) return node.data.choices;
+						return ["Integer", "String", "Character", "Boolean"];
+					}
+				},
+				"array": {show: Inspector.showIfPresent, type:'checkbox'},
+				"direction": {
+					show: Inspector.showIfPresent,
+					type: "select",
+					choices: function(node, propName) {
+						if (Array.isArray(node.data.choices)) return node.data.choices;
+						return ["Asc", "Desc"];
+					}
+				},
+				"step" : {show: Inspector.showIfPresent, type:'number'}
+			}
+		});
 }

@@ -6,7 +6,7 @@ const categories = {
     IF: "if",
     INPUT: "inny",
     OUTPUT: "outty",
-    FOR: "fory",
+    FOR: "forsy",
     WHILE: "whiley",
     DOWHILE: "dowhiley",
     DECLARE: "declare",
@@ -14,7 +14,7 @@ const categories = {
     START: "start",
     END: "end",
     ENDIF: "endif",
-    ENDFOR: "endfory",
+    ENDFOR: "endforsy",
     ENDWHILE: "endwhiley",
     ENDDOWHILE: "enddowhiley"
 }
@@ -31,6 +31,13 @@ const colors = {
     DECLARE: "oldlace",
     ASSIGNMENT: "lightyellow",
     DEFAULT: "plum",
+}
+
+const linkNames = {
+    IFTRUE: "IfLeft",
+    IFFALSE: "IfRight",
+    LOOPFROM: "LoopTrue",
+    LOOPTO: "LoopTrueEnd",
 }
 
 /**
@@ -174,12 +181,12 @@ function initDiagram(gojs) {
         } else if (nodeCategory === categories.IF) {
             let endNodeKey = "end" + newnode.data.key
             diagram.model.addNodeData({ key: endNodeKey, category: categories.ENDIF, color: colors.IF })
-            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: "Left", text: "True", toPort: "True"})
+            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: linkNames.IFTRUE, text: "True", toPort: "True"})
             diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: "Right", text: "False", toPort: "False"})
             diagram.model.addLinkData({ from: endNodeKey, to: tonode.data.key, toPort: oldlink.data.toPort })
         } else if (nodeCategory === categories.FOR || nodeCategory === categories.WHILE) {
             diagram.model.addLinkData({ from: newnode.data.key, to: tonode.data.key, toPort: oldlink.data.toPort});
-            diagram.model.addLinkData({ from: newnode.data.key, to: newnode.data.key, fromPort: "TrueFor", toPort: "TrueEnd" });
+            diagram.model.addLinkData({ from: newnode.data.key, to: newnode.data.key, fromPort: linkNames.LOOPFROM, toPort: linkNames.LOOPTO });
         } else if (nodeCategory === categories.DOWHILE) {
             let endNodeKey = "end" + newnode.data.key;
             diagram.startTransaction();
@@ -320,8 +327,8 @@ function initDiagram(gojs) {
             });
             linkIntoNode.toNode = nextNode;
         } else if (node.category === categories.WHILE || node.category === categories.FOR) {
-            let oldLink = node.findLinksInto().filter(link => { return link.toPort !== "TrueEnd" } ).first();
-            let nextNode = node.findLinksOutOf().filter(link => { return link.fromPort !== "TrueFor" }).first().toNode;
+            let oldLink = node.findLinksInto().filter(link => { return link.toPort !== linkNames.LOOPTO } ).first();
+            let nextNode = node.findLinksOutOf().filter(link => { return link.fromPort !== linkNames.LOOPFROM }).first().toNode;
             oldLink.toNode = nextNode;
         } else  {
             exciseNode(node);
@@ -441,7 +448,7 @@ function initDiagram(gojs) {
                     new go.Binding("text","",conditionText).makeTwoWay())
             ),
             gojs(go.Shape, "Circle",
-                { portId: "Left", fromSpot: go.Spot.Left, stroke: null,
+                { portId: linkNames.IFTRUE, fromSpot: go.Spot.Left, stroke: null,
                 alignment: go.Spot.Left, alignmentFocus: go.Spot.Left,
                 fill: null, width: 1, height: 1 }
             ),
@@ -476,13 +483,13 @@ function initDiagram(gojs) {
                 gojs(go.Shape, "Hexagon", loopShapeProperties),
                 gojs(go.TextBlock, fontProperties, new go.Binding("text","",forsyText).makeTwoWay()),
                 gojs(go.Shape, "Circle",
-                    { portId: "TrueEnd", toSpot: go.Spot.BottomRight, stroke: null,
+                    { portId: linkNames.LOOPTO, toSpot: go.Spot.BottomRight, stroke: null,
                     alignment: go.Spot.BottomRight, alignmentFocus: go.Spot.BottomRight,
                     fill: null, width: 1, height: 1 }
                 )
             ),
             gojs(go.Shape, "Circle",
-                { portId: "TrueFor", fromSpot: go.Spot.Right, stroke: null,
+                { portId: linkNames.LOOPFROM, fromSpot: go.Spot.Right, stroke: null,
                 alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
                 fill: null, width: 1, height: 1 }
             )
@@ -496,13 +503,13 @@ function initDiagram(gojs) {
                 gojs(go.Shape, "Hexagon", loopShapeProperties),
                 gojs(go.TextBlock, fontProperties, new go.Binding("text","",conditionText).makeTwoWay()),
                 gojs(go.Shape, "Circle",
-                    { portId: "TrueEnd", toSpot: go.Spot.BottomRight, stroke: null,
+                    { portId: linkNames.LOOPTO, toSpot: go.Spot.BottomRight, stroke: null,
                     alignment: go.Spot.BottomRight, alignmentFocus: go.Spot.BottomRight,
                     fill: null, width: 1, height: 1 }
                 )
             ),
             gojs(go.Shape, "Circle",
-                { portId: "TrueFor", fromSpot: go.Spot.Right, stroke: null,
+                { portId: linkNames.LOOPFROM, fromSpot: go.Spot.Right, stroke: null,
                 alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
                 fill: null, width: 1, height: 1 }
             )
@@ -556,7 +563,7 @@ function initDiagram(gojs) {
         gojs(go.Panel,  // link label for conditionals, normally not visible
             { visible: false, name: "LABEL", segmentIndex: 0, segmentFraction: 0 },
             new go.Binding("visible", "", function(link) { return link.fromNode.category === categories.IF && !!link.data.text; }).ofObject(),
-            new go.Binding("segmentOffset", "fromPort", function(s) { return s === "Left" ? new go.Point(0, 15) : new go.Point(0, -15); }),
+            new go.Binding("segmentOffset", "fromPort", function(s) { return s === linkNames.IFTRUE ? new go.Point(0, 15) : new go.Point(0, -15); }),
             gojs(go.TextBlock,
                 {
                 //   textAlign: "center",

@@ -1,0 +1,9 @@
+begin 
+inty gamma;
+gamma = 121;
+if ((gamma % 2) == 0)
+output "the number is even";
+else 
+output "the number is odd";
+endif
+end

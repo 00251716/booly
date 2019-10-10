@@ -1,9 +1,16 @@
-begin 
-inty gamma;
-gamma = 121;
-if ((gamma % 2) == 0)
-output "the number is even";
-else 
-output "the number is odd";
-endif
+begin
+	inty k;
+	inty p;
+	k = 3;
+	if (k == 3)
+		outty "El valor de k es: " + k;
+	else 
+		forsy (inty i = 1; i = 10; i = i + 1)
+			k = i;
+			forsy (inty j = 1; j = 5; j = j + 1)
+				p = k*j;
+			endforsy
+			outty "El valor p es: " + p;
+		endforsy
+	endif
 end

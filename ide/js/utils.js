@@ -134,7 +134,7 @@ function JSONtoCompiler(){
 					break;
 	
 				case categories.OUTPUT:
-					jsontext+=categories.OUTPUT + node.expression+";\n";
+					jsontext+=categories.OUTPUT + " " + node.expression+";\n";
 					boolyPrint(nextnode, path, indent);
 					break;
 	

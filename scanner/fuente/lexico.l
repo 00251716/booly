@@ -20,7 +20,7 @@ endfor_tk		endforsy
 while_tk		whiley
 do_tk			doey
 in_tk			inny
-out_tk			output
+out_tk			outty
 arithmetic_op_tk	"+"|"-"|"*"|"/"|"^"|"%"		
 popen_tk		"("
 pclose_tk		")"

@@ -181,8 +181,8 @@ function initDiagram(gojs) {
         } else if (nodeCategory === categories.IF) {
             let endNodeKey = "end" + newnode.data.key
             diagram.model.addNodeData({ key: endNodeKey, category: categories.ENDIF, color: colors.IF })
-            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: linkNames.IFTRUE, text: "True", toPort: "True"})
-            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: "Right", text: "False", toPort: "False"})
+            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: linkNames.IFTRUE, text: "True", toPort: linkNames.IFTRUE})
+            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: linkNames.IFFALSE, text: "False", toPort: linkNames.IFFALSE})
             diagram.model.addLinkData({ from: endNodeKey, to: tonode.data.key, toPort: oldlink.data.toPort })
         } else if (nodeCategory === categories.FOR || nodeCategory === categories.WHILE) {
             diagram.model.addLinkData({ from: newnode.data.key, to: tonode.data.key, toPort: oldlink.data.toPort});
@@ -453,7 +453,7 @@ function initDiagram(gojs) {
                 fill: null, width: 1, height: 1 }
             ),
             gojs(go.Shape, "Circle",
-                { portId: "Right", fromSpot: go.Spot.Right, stroke: null,
+                { portId: linkNames.IFFALSE, fromSpot: go.Spot.Right, stroke: null,
                 alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
                 fill: null, width: 1, height: 1 }
             )
@@ -464,12 +464,12 @@ function initDiagram(gojs) {
         gojs(go.Node, "Spot", commonNodeProperties, { fromSpot: go.Spot.Bottom },
             gojs(go.Shape, "Circle", endInstructionProperties, new go.Binding("fill", "color")),
             gojs(go.Shape, "Circle",
-                { portId: "True", toSpot: go.Spot.Left, stroke: null,
+                { portId: linkNames.IFTRUE, toSpot: go.Spot.Left, stroke: null,
                 alignment: go.Spot.Left, alignmentFocus: go.Spot.Left,
                 fill: null, width: 1, height: 1 }
             ),
             gojs(go.Shape, "Circle",
-                { portId: "False", toSpot: go.Spot.Right, stroke: null,
+                { portId: linkNames.IFFALSE, toSpot: go.Spot.Right, stroke: null,
                 alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
                 fill: null, width: 1, height: 1 }
             )

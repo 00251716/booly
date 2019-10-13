@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Booly IDE compiler</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+      <a class="navbar-brand" href="#"><b>Booly Compiler</b></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+      </ul>
+    </div>
+    <button type="button" class="btn btn-outline-dark mx-1" id="dwn-btn" >Save</button>
+    <label class="btn btn-outline-dark mx-1 my-1">
+      Load<input type="file" style="display: none;" id="load-btn"></input>
+    </label>
+    <button type="button" class="btn btn-outline-dark mx-1" id="cmp-btn" onclick="JSONtoCompiler();">Compile</button>
+    </div>
+  </nav>
+
+  <div class="container mt-3">
+      <div class="d-flex flex-row" id="main-container">
+
+        <!-- Diagram editor -->
+        <div id="my-palette" class="border border-dark mx-2"></div>
+        <div id="my-diagram" class="border border-dark mx-2"></div>
+
+        <!-- Properties editor modal -->
+        <div class="modal fade" id="contextMenu" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Properties</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <div id="myInspectorDiv" class="inspector"> </div>
+              </div>
+              <div class="modal-footer">
+                <button id="updateButton" type="button" class="btn btn-success" data-dismiss="modal" >Ok</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+  </div>
+
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/go-debug.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/figures.js"></script>
+    <script src="js/diagram.js"></script>
+    <script src="js/DataInspector.js"></script>
+</body>
+</html>

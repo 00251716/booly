@@ -110,32 +110,34 @@ function JSONtoCompiler(){
 	jsontext += "begin\n";
 	boolyPrint(nextnode,true);
 
-	function boolyPrint(node, path, indent = 1){
+	function boolyPrint(node, indent = 1){
 		let nextnode = getNextNode(node);
-		if (loopKeys[loopKeys.length - 1] === node.key && node.category != categories.DOWHILE) {
+		if (loopKeys[loopKeys.length - 1] === node.key 
+			&& node.category != categories.DOWHILE 
+			&& node.category != categories.ENDIF) {
 			jsontext += getIndentation(node, --indent) + "end"+node.category+"\n";
 			loopKeys.pop();
-			boolyPrint(nextnode, path, indent);
+			boolyPrint(nextnode, indent);
 		} 
 		else {
 			jsontext += getIndentation(node, indent);
 			switch (node.category) {
 				case categories.DECLARE:
 					jsontext+=node.type + " " + node.variable + (node.array ? "[]" : "")+";\n";
-					boolyPrint(nextnode, path, indent);
+					boolyPrint(nextnode, indent);
 					break;
 				case categories.ASSIGNMENT:
 					jsontext+=node.variable + " = " + node.expression+";\n";
-					boolyPrint(nextnode, path, indent);
+					boolyPrint(nextnode, indent);
 					break;
 				case categories.INPUT:
 					jsontext+= categories.INPUT +" "+ node.variable+";\n";
-					boolyPrint(nextnode, path, indent);
+					boolyPrint(nextnode, indent);
 					break;
 	
 				case categories.OUTPUT:
 					jsontext+=categories.OUTPUT + " " + node.expression+";\n";
-					boolyPrint(nextnode, path, indent);
+					boolyPrint(nextnode, indent);
 					break;
 	
 				case categories.IF:
@@ -143,22 +145,31 @@ function JSONtoCompiler(){
 					// Making a copy of the next node on the right side
 					// to avoid refind it later
 					let rightNode = nextnode;
+
+					loopKeys.push("end"+node.key);
+					loopKeys.push("end"+node.key);
+
 					//true path
 					nextnode = getNextNode(node, true);
-					boolyPrint(nextnode,false, indent + 1);
+					boolyPrint(nextnode, indent + 1);
 					//false path
 					if (rightNode.category !== categories.ENDIF){
 						jsontext += getIndentation(indent) + "else "+"\n";
 					} else {
 						jsontext = jsontext.substring(0, jsontext.length - indent);
 					}
-					boolyPrint(rightNode,true, ++indent);
+					boolyPrint(rightNode, ++indent);
 					break;
 	
 				case categories.ENDIF:
-					if (path) {
+					if (loopKeys[loopKeys.length - 1] === node.key) {
+						loopKeys.pop();
+						if (loopKeys[loopKeys.length - 1] === node.key){
+							break;
+						}
+
 						jsontext+="endif"+"\n";
-						boolyPrint(nextnode, path, --indent);
+						boolyPrint(nextnode, --indent);
 					}
 					break;
 	
@@ -168,7 +179,7 @@ function JSONtoCompiler(){
 								+node.variable +" = " + node.variable +" + "+ node.step + ")\n";
 					nextnode = getNextNode(node, true);
 					loopKeys.push(node.key);
-					boolyPrint(nextnode,path, ++indent);
+					boolyPrint(nextnode, ++indent);
 					break;
 	
 				case categories.WHILE:
@@ -176,21 +187,21 @@ function JSONtoCompiler(){
 					//loop path
 					nextnode = getNextNode(node, true);
 					loopKeys.push(node.key);
-					boolyPrint(nextnode,path, ++indent);
+					boolyPrint(nextnode, ++indent);
 					break;
 
 				case categories.ENDDOWHILE:
 					jsontext += "do\n";
 					nextnode = getNextNode(node, true);
 					loopKeys.push(node.key.slice(3));
-					boolyPrint(nextnode,path, ++indent);
+					boolyPrint(nextnode, ++indent);
 					break;
 				
 				case categories.DOWHILE:
 					jsontext += "whiley("+node.condition+")\n";
 					nextnode = getNextNode(node, true);
 					loopKeys.pop();
-					boolyPrint(nextnode,path, --indent);
+					boolyPrint(nextnode, --indent);
 					break;
 
 				case categories.END:

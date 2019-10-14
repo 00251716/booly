@@ -112,7 +112,7 @@ function JSONtoCompiler(){
 
 	function boolyPrint(node, path, indent = 1){
 		let nextnode = getNextNode(node);
-		if (loopKeys[loopKeys.length - 1] === node.key) {
+		if (loopKeys[loopKeys.length - 1] === node.key && node.category != categories.DOWHILE) {
 			jsontext += getIndentation(node, --indent) + "end"+node.category+"\n";
 			loopKeys.pop();
 			boolyPrint(nextnode, path, indent);
@@ -129,7 +129,7 @@ function JSONtoCompiler(){
 					boolyPrint(nextnode, path, indent);
 					break;
 				case categories.INPUT:
-					jsontext+= categories.INPUT + node.variable+";\n";
+					jsontext+= categories.INPUT +" "+ node.variable+";\n";
 					boolyPrint(nextnode, path, indent);
 					break;
 	
@@ -172,12 +172,27 @@ function JSONtoCompiler(){
 					break;
 	
 				case categories.WHILE:
-					jsontext += "whiley(inty "+node.condition+")\n";
+					jsontext += "whiley("+node.condition+")\n";
 					//loop path
 					nextnode = getNextNode(node, true);
+					loopKeys.push(node.key);
 					boolyPrint(nextnode,path, ++indent);
 					break;
-	
+
+				case categories.ENDDOWHILE:
+					jsontext += "do\n";
+					nextnode = getNextNode(node, true);
+					loopKeys.push(node.key.slice(3));
+					boolyPrint(nextnode,path, ++indent);
+					break;
+				
+				case categories.DOWHILE:
+					jsontext += "whiley("+node.condition+")\n";
+					nextnode = getNextNode(node, true);
+					loopKeys.pop();
+					boolyPrint(nextnode,path, --indent);
+					break;
+
 				case categories.END:
 					jsontext+="end"+"\n";
 					break;
@@ -199,13 +214,17 @@ function JSONtoCompiler(){
 				break;
 			case categories.FOR:
 			case categories.WHILE:
-			case categories.DOWHILE:
 				if (isTrueValue) {
 					nextLink = links.find(elem => elem.from == node.key && elem.fromPort === linkNames.LOOPFROM);
 				}
 				else {
 					nextLink = links.find(elem => elem.from == node.key && elem.fromPort !== linkNames.LOOPFROM);
 				}
+				break;
+			case categories.DOWHILE:
+				let nextnode = myDiagram.findNodeForKey("doWhile").findNodesOutOf().first().data;
+				//let nextnode = node.findNodesOutOf().find(elem => elem.category !== categories.ENDDOWHILE);
+				return nextnode;
 				break;
 			case categories.END:
 				return;

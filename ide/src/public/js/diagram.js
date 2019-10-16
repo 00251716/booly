@@ -170,10 +170,7 @@ function initDiagram(gojs) {
         let newnode = diagram.selection.first();
         if (!(newnode instanceof go.Node) || newnode.linksConnected.count > 0) return;
         let oldlink = obj.part;
-        if (!isLoopLink(oldlink)) {
-            console.log("canceling")
-            return;
-        } 
+        if (!isLoopLink(oldlink)) return;
         let tonode = oldlink.toNode;
         let nodeCategory = newnode.category;
         if (nodeCategory !== categories.DOWHILE) {
@@ -301,15 +298,16 @@ function initDiagram(gojs) {
 
     /**
      * Verifies if the node has a link coming into it.
-     * Returns true if it is a simple instruction and has no link
-     * or if it is a loop instruction and has one link (from itself).
+     * Returns true if it is an instruction and has no link
+     * or if it is a loop instruction and has just one link (from itself).
      * False otherwise.
      * @param {go.Node} node 
      */
     function isOnlyComingIntoItself(node) {
-        if (loopInstructions.includes(node.category)) {
+        if (node.category === categories.FOR || node.category === categories.WHILE ||
+            node.category === categories.ENDDOWHILE) {
             return node.findLinksInto().count <= 1;
-        } else  {
+        } else {
             return node.findLinksInto().count == 0;
         }
     }
@@ -320,38 +318,22 @@ function initDiagram(gojs) {
             let ifNode = myDiagram.findNodeForKey(node.key.substring(3))
             let previousLink = ifNode.findLinksInto().first();
             previousLink.toNode = toNode;
-        }/*  
+        } 
         else if (node.category === categories.DOWHILE) {
             let endNode = myDiagram.findNodeForKey("end" + node.key);
-            let linkIntoEndNode;
-            endNode.findLinksInto().each((link) => {
-                if (link.data.from !== node.key) {
-                    linkIntoEndNode = link;
-                }
-            });
-            let nextNode;
-            node.findNodesOutOf().each((n) => {
-                if (n !== endNode) {
-                    nextNode = n;
-                }
-            });
-            linkIntoEndNode.toNode = nextNode;
+            let oldLink = endNode.findLinksInto().
+                filter(link => { return link.data.from !== node.key }).first();
+            let nextNode = node.findNodesOutOf().
+                filter(n => { return n !== endNode }).first();
+            oldLink.toNode = nextNode;
         } else if (node.category === categories.ENDDOWHILE) {
             let doWhileNode = myDiagram.findNodeForKey(node.key.substring(3));
-            let linkIntoNode;
-            node.findLinksInto().each((link) => {
-                if (link.data.from !== doWhileNode.key) {
-                    linkIntoNode = link;
-                }
-            });
-            let nextNode;
-            doWhileNode.findNodesOutOf().each((n) => {
-                if (n !== node) {
-                    nextNode = n;
-                }
-            });
-            linkIntoNode.toNode = nextNode;
-        } */ else if (node.category === categories.WHILE || node.category === categories.FOR) {
+            let oldLink = node.findLinksInto().
+                filter(link => { return link.data.from !== doWhileNode.key }).first();
+            let nextNode = doWhileNode.findNodesOutOf().
+                filter(n => { return n.key !== node.key }).first();
+            oldLink.toNode = nextNode;
+        } else if (node.category === categories.WHILE || node.category === categories.FOR) {
             let endNode = myDiagram.findNodeForKey("end" + node.key);
             let nextNode = endNode.findNodesOutOf().filter(n => { return n !== node }).first();
             let oldLink = node.findLinksInto().filter(link => { return link.data.from !== endNode.key }).first();
@@ -374,8 +356,6 @@ function initDiagram(gojs) {
 				layeringOption: go.LayeredDigraphLayout.LayerLongestPathSource, columnSpacing: 45}),
 			// Funcion que se ejecuta mientras se borra un nodo del diagrama
             SelectionDeleting: function(e) {
-                // console.log(e.subject.first().category)
-                // exciseNode(e.subject.first()) // Deletes a node and its children
                 deleteNodeByCategory(e.subject.first())
             },
             selectionDeleted: function(e) {
@@ -399,13 +379,12 @@ function initDiagram(gojs) {
         return false;
     }, false);
     
-    //Create nodes templates that actually shows in the diagram 
+    //#region Creation of node templates that are actually shown in the diagram
     myDiagram.nodeTemplateMap.add(categories.START,
         gojs(go.Node, "Auto",
             {
                 locationSpot: go.Spot.Center,
                 deletable: false,
-                movable: false,
                 fromSpot: go.Spot.Bottom,
                 toSpot: go.Spot.None
             },
@@ -422,7 +401,6 @@ function initDiagram(gojs) {
             {
                 locationSpot: go.Spot.Center,
                 deletable: false,
-                movable: false,
                 fromSpot: go.Spot.None,
                 toSpot: go.Spot.Top
             },
@@ -569,6 +547,7 @@ function initDiagram(gojs) {
             gojs(go.Shape, "Circle", endInstructionProperties, { fill: colors.LOOP }),
         )
     )
+    //#endregion
     
     myDiagram.model.nodeDataArray = [
         {key: "start", category: categories.START},
@@ -609,7 +588,6 @@ function initDiagram(gojs) {
             new go.Binding("segmentOffset", "fromPort", function(s) { return s === linkNames.IFTRUE ? new go.Point(0, 15) : new go.Point(0, -15); }),
             gojs(go.TextBlock,
                 {
-                //   textAlign: "center",
                   font: "10pt sans-serif",
                   margin: 5,
                   editable: false

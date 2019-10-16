@@ -184,20 +184,31 @@ function initDiagram(gojs) {
             diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: linkNames.IFTRUE, text: "True", toPort: linkNames.IFTRUE})
             diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey, fromPort: linkNames.IFFALSE, text: "False", toPort: linkNames.IFFALSE})
             diagram.model.addLinkData({ from: endNodeKey, to: tonode.data.key, toPort: oldlink.data.toPort })
-        } else if (nodeCategory === categories.FOR || nodeCategory === categories.WHILE) {
-            diagram.model.addLinkData({ from: newnode.data.key, to: tonode.data.key, toPort: oldlink.data.toPort});
-            diagram.model.addLinkData({ from: newnode.data.key, to: newnode.data.key, fromPort: linkNames.LOOPFROM, toPort: linkNames.LOOPTO });
-        } else if (nodeCategory === categories.DOWHILE) {
-            let endNodeKey = "end" + newnode.data.key;
+        } else if (loopInstructions.includes(nodeCategory)) {
+            let endNodeKey = "end" + newnode.key;
             diagram.startTransaction();
-            diagram.model.addNodeData({ key: endNodeKey, category: categories.ENDDOWHILE, color: colors.LOOP })
-            diagram.commitTransaction("Added enddowhile node");
-            enddo = diagram.findNodeForKey(endNodeKey);
-            oldlink.toNode = enddo;
-            diagram.model.addLinkData({ from: endNodeKey, to: newnode.data.key });
-            diagram.model.addLinkData({ from: newnode.data.key, to: tonode.data.key });
-            diagram.model.addLinkData({ from: newnode.data.key, to: endNodeKey });
-        } else oldlink.toNode = tonode;
+            diagram.model.addNodeData({ key: endNodeKey, category: getEndNodeCategory(nodeCategory) })
+            diagram.commitTransaction("Added end loop node");
+
+            if (nodeCategory === categories.DOWHILE) {
+                enddo = diagram.findNodeForKey(endNodeKey);
+                oldlink.toNode = enddo;
+                diagram.model.addLinkData({ from: endNodeKey, to: newnode.key });
+                diagram.model.addLinkData({ from: newnode.key, to: tonode.key });
+                diagram.model.addLinkData({ from: newnode.key, to: endNodeKey });
+            } else {
+                diagram.model.addLinkData({ from: newnode.key, to: endNodeKey })
+                diagram.model.addLinkData({ from: endNodeKey, to: tonode.key })
+                diagram.model.addLinkData({ from: endNodeKey, to: newnode.key, toPort: linkNames.LOOPTO })
+            }
+        }
+        else oldlink.toNode = tonode;
+    }
+
+    function getEndNodeCategory(startNodeCategory) {
+        if (startNodeCategory === categories.FOR) return categories.ENDFOR;
+        else if (startNodeCategory === categories.WHILE) return categories.ENDWHILE;
+        else return categories.ENDDOWHILE;
     }
     
     // Draw links between the parent and children nodes of a node being deleted.
@@ -462,7 +473,7 @@ function initDiagram(gojs) {
 
     myDiagram.nodeTemplateMap.add(categories.ENDIF,
         gojs(go.Node, "Spot", commonNodeProperties, { fromSpot: go.Spot.Bottom },
-            gojs(go.Shape, "Circle", endInstructionProperties, new go.Binding("fill", "color")),
+            gojs(go.Shape, "Circle", endInstructionProperties, { fill: colors.IF }),
             gojs(go.Shape, "Circle",
                 { portId: linkNames.IFTRUE, toSpot: go.Spot.Left, stroke: null,
                 alignment: go.Spot.Left, alignmentFocus: go.Spot.Left,
@@ -480,16 +491,12 @@ function initDiagram(gojs) {
         gojs(go.Node, "Spot", { locationSpot: go.Spot.Center, fromSpot: go.Spot.Bottom, toSpot: go.Spot.Top },
             gojs(go.Panel, "Auto",
                 { contextMenu: myContextMenu },
-                gojs(go.Shape, "Hexagon", loopShapeProperties),
+                gojs(go.Shape, "Hexagon", loopShapeProperties,
+                { fromSpot: go.Spot.Bottom, toSpot: go.Spot.Top }),
                 gojs(go.TextBlock, fontProperties, new go.Binding("text","",forsyText).makeTwoWay()),
-                gojs(go.Shape, "Circle",
-                    { portId: linkNames.LOOPTO, toSpot: go.Spot.BottomRight, stroke: null,
-                    alignment: go.Spot.BottomRight, alignmentFocus: go.Spot.BottomRight,
-                    fill: null, width: 1, height: 1 }
-                )
             ),
             gojs(go.Shape, "Circle",
-                { portId: linkNames.LOOPFROM, fromSpot: go.Spot.Right, stroke: null,
+                { portId: linkNames.LOOPTO, toSpot: go.Spot.Right, stroke: null,
                 alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
                 fill: null, width: 1, height: 1 }
             )
@@ -500,16 +507,12 @@ function initDiagram(gojs) {
         gojs(go.Node, "Spot", { locationSpot: go.Spot.Center, fromSpot: go.Spot.Bottom, toSpot: go.Spot.Top },
             gojs(go.Panel, "Auto",
                 { contextMenu: myContextMenu },
-                gojs(go.Shape, "Hexagon", loopShapeProperties),
+                gojs(go.Shape, "Hexagon", loopShapeProperties, 
+                { fromSpot: go.Spot.Bottom, toSpot: go.Spot.Top }),
                 gojs(go.TextBlock, fontProperties, new go.Binding("text","",conditionText).makeTwoWay()),
-                gojs(go.Shape, "Circle",
-                    { portId: linkNames.LOOPTO, toSpot: go.Spot.BottomRight, stroke: null,
-                    alignment: go.Spot.BottomRight, alignmentFocus: go.Spot.BottomRight,
-                    fill: null, width: 1, height: 1 }
-                )
             ),
             gojs(go.Shape, "Circle",
-                { portId: linkNames.LOOPFROM, fromSpot: go.Spot.Right, stroke: null,
+                { portId: linkNames.LOOPTO, toSpot: go.Spot.Right, stroke: null,
                 alignment: go.Spot.Right, alignmentFocus: go.Spot.Right,
                 fill: null, width: 1, height: 1 }
             )
@@ -517,15 +520,33 @@ function initDiagram(gojs) {
     );
 
     myDiagram.nodeTemplateMap.add(categories.DOWHILE,
-        gojs(go.Node, "Auto", commonNodeProperties, { contextMenu: myContextMenu, fromSpot: go.Spot.BottomRightSides, toSpot: go.Spot.Top },
+        gojs(go.Node, "Auto", commonNodeProperties,
+            { contextMenu: myContextMenu, fromSpot: go.Spot.BottomRightSides, toSpot: go.Spot.Top },
             gojs(go.Shape, "Hexagon", loopShapeProperties),
             gojs(go.TextBlock, fontProperties, new go.Binding("text","",conditionText).makeTwoWay())
         )
     );
 
     myDiagram.nodeTemplateMap.add(categories.ENDDOWHILE,
-        gojs(go.Node, "Auto", commonNodeProperties, { toSpot: go.Spot.TopRightSides, fromSpot: go.Spot.Bottom, toMaxLinks: 2 },
-            gojs(go.Shape, "Circle", endInstructionProperties, new go.Binding("fill", "color")),
+        gojs(go.Node, "Auto", commonNodeProperties, 
+            { toSpot: go.Spot.TopRightSides, fromSpot: go.Spot.Bottom, toMaxLinks: 2 },
+            gojs(go.Shape, "Circle", endInstructionProperties, { fill: colors.LOOP }),
+        )
+    );
+
+    myDiagram.nodeTemplateMap.add(categories.ENDFOR,
+        gojs(go.Node, "Auto", commonNodeProperties,
+            { toSpot: go.Spot.Top, fromSpot: go.Spot.BottomRightSides,
+                toMaxLinks: 1, fromMaxLinks: 2 },
+            gojs(go.Shape, "Circle", endInstructionProperties,{ fill: colors.LOOP }),
+        )
+    );
+    
+    myDiagram.nodeTemplateMap.add(categories.ENDWHILE,
+        gojs(go.Node, "Auto", commonNodeProperties,
+            { toSpot: go.Spot.Top, fromSpot: go.Spot.BottomRightSides,
+                toMaxLinks: 1, fromMaxLinks: 2 },
+            gojs(go.Shape, "Circle", endInstructionProperties, { fill: colors.LOOP }),
         )
     )
     
@@ -554,11 +575,13 @@ function initDiagram(gojs) {
             mouseDragLeave: function(e, link) { link.isHighlighted = false; },
             mouseDrop: dropOntoLink,
             layoutConditions: go.Part.LayoutAdded | go.Part.LayoutRemoved,
-            corner: 4
+            corner: 4,
+            fromEndSegmentLength: 20,
+            toEndSegmentLength: 20
         },
-        gojs(go.Shape, { strokeWidth: 2 },
+        gojs(go.Shape, { strokeWidth: 1 },
             new go.Binding("stroke", "isHighlighted", function(h) { return h ? "chartreuse" : "rgb(63,63,63)"; }).ofObject(),
-            new go.Binding("strokeWidth", "isHighlighted", function(h) { return h ? 4 : 2; }).ofObject()), // Link shape
+            new go.Binding("strokeWidth", "isHighlighted", function(h) { return h ? 4 : 1; }).ofObject()), // Link shape
         gojs(go.Shape, { toArrow: "Standard" }), // Arrow shape
         gojs(go.Panel,  // link label for conditionals, normally not visible
             { visible: false, name: "LABEL", segmentIndex: 0, segmentFraction: 0 },

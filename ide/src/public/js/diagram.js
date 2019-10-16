@@ -170,6 +170,10 @@ function initDiagram(gojs) {
         let newnode = diagram.selection.first();
         if (!(newnode instanceof go.Node) || newnode.linksConnected.count > 0) return;
         let oldlink = obj.part;
+        if (!isLoopLink(oldlink)) {
+            console.log("canceling")
+            return;
+        } 
         let tonode = oldlink.toNode;
         let nodeCategory = newnode.category;
         if (nodeCategory !== categories.DOWHILE) {
@@ -209,6 +213,16 @@ function initDiagram(gojs) {
         if (startNodeCategory === categories.FOR) return categories.ENDFOR;
         else if (startNodeCategory === categories.WHILE) return categories.ENDWHILE;
         else return categories.ENDDOWHILE;
+    }
+
+    function isLoopLink(link) {
+        let fromNode = link.fromNode, toNode = link.toNode;
+        if (fromNode.category === categories.ENDFOR || fromNode.category === categories.ENDWHILE) {
+            if (fromNode.key.substring(3) === toNode.key) return false;
+        } else if (fromNode.category === categories.DOWHILE) {
+            if (fromNode.key === toNode.key.substring(3)) return false;
+        } else return true;
+        return true;
     }
     
     // Draw links between the parent and children nodes of a node being deleted.
@@ -294,7 +308,7 @@ function initDiagram(gojs) {
      */
     function isOnlyComingIntoItself(node) {
         if (loopInstructions.includes(node.category)) {
-            return node.findLinksInto().count == 1;
+            return node.findLinksInto().count <= 1;
         } else  {
             return node.findLinksInto().count == 0;
         }
@@ -306,7 +320,7 @@ function initDiagram(gojs) {
             let ifNode = myDiagram.findNodeForKey(node.key.substring(3))
             let previousLink = ifNode.findLinksInto().first();
             previousLink.toNode = toNode;
-        } 
+        }/*  
         else if (node.category === categories.DOWHILE) {
             let endNode = myDiagram.findNodeForKey("end" + node.key);
             let linkIntoEndNode;
@@ -337,11 +351,17 @@ function initDiagram(gojs) {
                 }
             });
             linkIntoNode.toNode = nextNode;
-        } else if (node.category === categories.WHILE || node.category === categories.FOR) {
-            let oldLink = node.findLinksInto().filter(link => { return link.toPort !== linkNames.LOOPTO } ).first();
-            let nextNode = node.findLinksOutOf().filter(link => { return link.fromPort !== linkNames.LOOPFROM }).first().toNode;
+        } */ else if (node.category === categories.WHILE || node.category === categories.FOR) {
+            let endNode = myDiagram.findNodeForKey("end" + node.key);
+            let nextNode = endNode.findNodesOutOf().filter(n => { return n !== node }).first();
+            let oldLink = node.findLinksInto().filter(link => { return link.data.from !== endNode.key }).first();
             oldLink.toNode = nextNode;
-        } else  {
+        } else if (node.category === categories.ENDFOR || node.category === categories.ENDWHILE) {
+            let beginNode = myDiagram.findNodeForKey(node.key.substring(3));
+            let oldLink = beginNode.findLinksInto().filter(link => { return link.data.from !== node.key }).first();
+            let nextNode = node.findNodesOutOf().filter(n => { return n !== beginNode }).first();
+            oldLink.toNode = nextNode;
+        } else {
             exciseNode(node);
         }
     }

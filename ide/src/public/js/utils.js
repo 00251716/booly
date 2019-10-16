@@ -112,10 +112,10 @@ function JSONtoCompiler(){
 
 	function boolyPrint(node, indent = 1){
 		let nextnode = getNextNode(node);
-		if (loopKeys[loopKeys.length - 1] === node.key 
+		if (getLastKey() === node.key 
 			&& node.category != categories.DOWHILE 
 			&& node.category != categories.ENDIF) {
-			jsontext += getIndentation(node, --indent) + "end"+node.category+"\n";
+			jsontext += getIndentation(node, --indent) +node.category+"\n";
 			loopKeys.pop();
 			boolyPrint(nextnode, indent);
 		} 
@@ -141,7 +141,7 @@ function JSONtoCompiler(){
 					break;
 	
 				case categories.IF:
-					jsontext+="if ("+node.condition+")"+"\n";
+					jsontext+="if ("+node.condition+")\n";
 					// Making a copy of the next node on the right side
 					// to avoid refind it later
 					let rightNode = nextnode;
@@ -162,9 +162,9 @@ function JSONtoCompiler(){
 					break;
 	
 				case categories.ENDIF:
-					if (loopKeys[loopKeys.length - 1] === node.key) {
+					if (getLastKey() === node.key) {
 						loopKeys.pop();
-						if (loopKeys[loopKeys.length - 1] === node.key){
+						if (getLastKey() === node.key){
 							break;
 						}
 
@@ -177,29 +177,28 @@ function JSONtoCompiler(){
 					jsontext += categories.FOR + " (inty "+node.variable+" = "+node.startValue + "; "
 								+node.variable + " = "+ node.endValue + "; "
 								+node.variable +" = " + node.variable +" + "+ node.step + ")\n";
-					nextnode = getNextNode(node, true);
-					loopKeys.push(node.key);
+					nextnode = getNextNode(node);
+					loopKeys.push("end" + node.key);
 					boolyPrint(nextnode, ++indent);
 					break;
 	
 				case categories.WHILE:
 					jsontext += "whiley("+node.condition+")\n";
 					//loop path
-					nextnode = getNextNode(node, true);
-					loopKeys.push(node.key);
+					nextnode = getNextNode(node);
+					loopKeys.push("end" + node.key);
 					boolyPrint(nextnode, ++indent);
-					break;
-
+					break;				
 				case categories.ENDDOWHILE:
 					jsontext += "do\n";
-					nextnode = getNextNode(node, true);
+					nextnode = getNextNode(node);
 					loopKeys.push(node.key.slice(3));
 					boolyPrint(nextnode, ++indent);
 					break;
 				
 				case categories.DOWHILE:
-					jsontext += "whiley("+node.condition+")\n";
-					nextnode = getNextNode(node, true);
+					jsontext += "whiley("+node.condition+");\n";
+					nextnode = getNextNode(node);
 					loopKeys.pop();
 					boolyPrint(nextnode, --indent);
 					break;
@@ -223,19 +222,8 @@ function JSONtoCompiler(){
 					nextLink = links.find(elem => elem.from == node.key && elem.fromPort === linkNames.IFFALSE);
 				}
 				break;
-			case categories.FOR:
-			case categories.WHILE:
-				if (isTrueValue) {
-					nextLink = links.find(elem => elem.from == node.key && elem.fromPort === linkNames.LOOPFROM);
-				}
-				else {
-					nextLink = links.find(elem => elem.from == node.key && elem.fromPort !== linkNames.LOOPFROM);
-				}
-				break;
 			case categories.DOWHILE:
-				let nextnode = myDiagram.findNodeForKey("doWhile").findNodesOutOf().first().data;
-				//let nextnode = node.findNodesOutOf().find(elem => elem.category !== categories.ENDDOWHILE);
-				return nextnode;
+				nextLink = links.find(elem => elem.from == node.key && elem.to !== "end" + node.key);
 				break;
 			case categories.END:
 				return;
@@ -257,6 +245,7 @@ function JSONtoCompiler(){
 		let tab = "\t";
 		switch (node.category) {
 			case categories.ENDIF:
+			case categories.DOWHILE:
 				return tab.repeat(level - 1);
 			case categories.END:
 				return "";
@@ -264,6 +253,8 @@ function JSONtoCompiler(){
 				return tab.repeat(level);
 		}
 	}
+
+	function getLastKey() { return loopKeys[loopKeys.length - 1]; }
 
 	return jsontext;
 }

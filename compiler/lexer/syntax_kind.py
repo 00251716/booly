@@ -49,3 +49,7 @@ class SyntaxKind(Enum):
     TrueKeyword = 42
     TypeKeyword = 43
     WhileyKeyboard = 44
+
+    # Expressions
+    BinaryExpression = 45
+    LiteralExpression = 46

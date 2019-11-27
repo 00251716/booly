@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class SyntaxKind(Enum):
+class TokenKind(Enum):
     # Tokens
     CharToken = 1
     IntToken = 2
@@ -49,8 +49,3 @@ class SyntaxKind(Enum):
     TrueKeyword = 42
     TypeKeyword = 43
     WhileyKeyboard = 44
-
-    # Expressions
-    BinaryExpression = 45
-    LiteralExpression = 46
-    ParenthesizedExpression = 47

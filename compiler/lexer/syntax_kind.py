@@ -53,3 +53,4 @@ class SyntaxKind(Enum):
     # Expressions
     BinaryExpression = 45
     LiteralExpression = 46
+    ParenthesizedExpression = 47

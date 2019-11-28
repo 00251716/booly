@@ -1,16 +1,19 @@
 from ast.expression import Expression
-from symbol.type import DataType, get_max_data_type
 from ast.node_kind import AstNodeKind
-from diagnostic.diagnostics import report_incompatible_types
+from diagnostic.diagnostics import report_undefined_unary_operator
+from symbol.type import DataType, get_max_data_type
 
 
 class UnaryExpression(Expression):
-    def __init__(self, operator, operand):
+    """"Unary expression handles minus and  plus. For logical expressions see Not"""
+
+    def __init__(self, operator, operand: Expression):
         super().__init__(operator, None)
+        self.operator = operator
         self.operand = operand
         self.data_type = get_max_data_type(DataType.Int, operand.data_type)
-        if self.data_type is None:
-            print("Error in unary expression")
+        if self.data_type is DataType.Error:
+            report_undefined_unary_operator(operator.lexeme, operand.data_type)
         self.kind = AstNodeKind.UnaryExpression
 
     def __str__(self):

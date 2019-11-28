@@ -1,6 +1,9 @@
+from ast.and_expression import AndExpression
 from ast.binary_expression import BinaryExpression
+from ast.comparison_expression import ComparisonExpression
 from ast.literal_expression import LiteralExpression
 from ast.not_expression import NotExpression
+from ast.or_expression import OrExpression
 from ast.unary_expression import UnaryExpression
 from lexer.lexer import Lexer
 from lexer.token_kind import TokenKind as Tk
@@ -73,7 +76,14 @@ class Parser:
                 break
             operator = self.get_token_and_move()
             right = self.parse_expression(precedence)
-            left = BinaryExpression(left, operator, right)
+            if precedence == 1:
+                left = OrExpression(operator, left, right)
+            elif precedence == 2:
+                left = AndExpression(operator, left, right)
+            elif precedence == 3:
+                left = ComparisonExpression(operator, left, right)
+            else:
+                left = BinaryExpression(left, operator, right)
         return left
 
     def factor(self):

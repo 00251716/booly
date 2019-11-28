@@ -1,5 +1,5 @@
 from .token import Token
-from .syntax_kind import SyntaxKind as Tk
+from .token_kind import TokenKind as Tk
 
 
 class Lexer:
@@ -38,69 +38,69 @@ class Lexer:
         self.move()
         self.read_whitespace()
         if self.current == "\0":
-            return Token(Tk.EndOfFileToken, self.current)
+            return Token(Tk.EndOfFileToken, self.current, self.line_number)
         elif self.current == "+":
-            return Token(Tk.PlusToken, self.current)
+            return Token(Tk.PlusToken, self.current, self.line_number)
         elif self.current == "-":
-            return Token(Tk.MinusToken, self.current)
+            return Token(Tk.MinusToken, self.current, self.line_number)
         elif self.current == "*":
-            return Token(Tk.StarToken, self.current)
+            return Token(Tk.StarToken, self.current, self.line_number)
         elif self.current == "/":
-            return Token(Tk.SlashToken, self.current)
+            return Token(Tk.SlashToken, self.current, self.line_number)
         elif self.current == "^":
-            return Token(Tk.HatToken, self.current)
+            return Token(Tk.HatToken, self.current, self.line_number)
         elif self.current == "%":
-            return Token(Tk.PercentToken, self.current)
+            return Token(Tk.PercentToken, self.current, self.line_number)
         elif self.current == "&":
             if self.lookahead == "&":
                 lexeme = self.current + self.lookahead
                 self.move()
-                return Token(Tk.AndToken, lexeme)
+                return Token(Tk.AndToken, lexeme, self.line_number)
             else:
-                return Token(Tk.BadToken, self.current)
+                return Token(Tk.BadToken, self.current, self.line_number)
         elif self.current == "|":
             if self.lookahead == "|":
                 lexeme = self.current + self.lookahead
                 self.move()
-                return Token(Tk.OrToken, lexeme)
+                return Token(Tk.OrToken, lexeme, self.line_number)
             else:
-                return Token(Tk.BadToken, self.current)
+                return Token(Tk.BadToken, self.current, self.line_number)
         elif self.current == "=":
             if self.lookahead == "=":
                 lexeme = self.current + self.lookahead
                 self.move()
-                return Token(Tk.EqualsToken, lexeme)
+                return Token(Tk.EqualsToken, lexeme, self.line_number)
             else:
-                return Token(Tk.AssignmentToken, self.current)
+                return Token(Tk.AssignmentToken, self.current, self.line_number)
         elif self.current == "!":
             if self.lookahead == "=":
                 lexeme = self.current + self.lookahead
                 self.move()
-                return Token(Tk.NotEqualsToken, lexeme)
+                return Token(Tk.NotEqualsToken, lexeme, self.line_number)
             else:
-                return Token(Tk.BangToken, self.current)
+                return Token(Tk.BangToken, self.current, self.line_number)
         elif self.current == "<":
             if self.lookahead == "=":
                 lexeme = self.current + self.lookahead
                 self.move()
-                return Token(Tk.LessEqualsToken, lexeme)
+                return Token(Tk.LessEqualsToken, lexeme, self.line_number)
             else:
-                return Token(Tk.LessToken, self.current)
+                return Token(Tk.LessToken, self.current, self.line_number)
         elif self.current == ">":
             if self.lookahead == "=":
                 lexeme = self.current + self.lookahead
                 self.move()
-                return Token(Tk.GreaterEqualsToken, lexeme)
+                return Token(Tk.GreaterEqualsToken, lexeme, self.line_number)
             else:
-                return Token(Tk.GreaterToken, self.current)
+                return Token(Tk.GreaterToken, self.current, self.line_number)
         elif self.current == "(":
-            return Token(Tk.OpenParenthesisToken, self.current)
+            return Token(Tk.OpenParenthesisToken, self.current, self.line_number)
         elif self.current == ")":
-            return Token(Tk.CloseParenthesisToken, self.current)
+            return Token(Tk.CloseParenthesisToken, self.current, self.line_number)
         elif self.current == ",":
-            return Token(Tk.CommaToken, self.current)
+            return Token(Tk.CommaToken, self.current, self.line_number)
         elif self.current == ";":
-            return Token(Tk.EndOfInstructionToken, self.current)
+            return Token(Tk.EndOfInstructionToken, self.current, self.line_number)
         elif self.current.isdigit():
             return self.read_number()
         elif self.current.isalpha():
@@ -108,8 +108,8 @@ class Lexer:
         elif self.current == "\"":
             return self.read_string()
         else:
-            self.errors.append("ERROR: bad character input: '{}' in line number {}".format(self.current, self.line_number))
-            return Token(Tk.BadToken, self.current)
+            # self.errors.append("ERROR: bad character input: '{}' in line number {}".format(self.current, self.line_number))
+            return Token(Tk.BadToken, self.current, self.line_number)
 
     def read_whitespace(self):
         while self.current.isspace():
@@ -123,14 +123,14 @@ class Lexer:
             self.move()
             v = 10 * v + int(self.current)
         if self.lookahead != ".":
-            return Token(Tk.IntToken, str(v), v)
+            return Token(Tk.IntToken, str(v), self.line_number, v)
         self.move()
         d = 10.0
         while self.lookahead.isdigit():
             self.move()
             v = v + (int(self.current) / d)
             d *= 10
-        return Token(Tk.FloatToken, str(v), v)
+        return Token(Tk.FloatToken, str(v), self.line_number, v)
 
     def read_word(self):
         lexeme = self.current
@@ -138,7 +138,7 @@ class Lexer:
             self.move()
             lexeme += self.current
         kind = self.get_keyword_or_identifier(lexeme)
-        return Token(kind, lexeme)
+        return Token(kind, lexeme, self.line_number)
 
     def read_string(self):
         lexeme = "\""
@@ -147,7 +147,7 @@ class Lexer:
             lexeme += self.current
             self.move()
         lexeme += "\""
-        return Token(Tk.StringToken, lexeme, lexeme)
+        return Token(Tk.StringToken, lexeme, self.line_number, lexeme)
 
     def get_keyword_or_identifier(self, lexeme):
         for i in range(len(self.keywords)):

@@ -15,22 +15,22 @@ def report_bad_character(line, char):
 
 
 def report_unexpected_token(current: Token, expected: Token):
-    message = "ERROR: Unexpected token <{}>, expected <{}>".format(current.kind.name, expected.kind.name)
+    message = "ERROR: Unexpected token '{}', expected '{}'".format(current.kind.name, expected.kind.name)
     report(message)
 
 
 def report_unexpected_tokens(current: Token, *expected):
-    message = "ERROR: Unexpected token <{}>, expected one of the following <{}>".format(current.kind.name, expected)
+    message = "ERROR: Unexpected token '{}', expected one of the following '{}'".format(current.kind.name, expected)
     report(message)
 
 
 def report_incompatible_types(type1, type2, operator: Token):
-    message = "ERROR: Incompatible data types <{}> and <{}> for operator <{}> on line {}".format(type1, type2,
+    message = "ERROR: Incompatible data types '{}' and '{}' for operator '{}' on line {}".format(type1, type2,
                                                                                                  operator.lexeme,
                                                                                                  operator.line_number)
     report(message)
 
 
 def report_undefined_unary_operator(operator_text, operand_type: DataType):
-    message = "ERROR: Unary operator <{}> is not defined for data type <{}>".format(operator_text, operand_type.name)
+    message = "ERROR: Unary operator '{}' is not defined for data type '{}'".format(operator_text, operand_type.name)
     report(message)

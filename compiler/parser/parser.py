@@ -1,7 +1,6 @@
 from ast.binary_expression import BinaryExpression
 from ast.expression import Expression
 from ast.literal_expression import LiteralExpression
-from ast.not_expression import NotExpression
 from ast.unary_expression import UnaryExpression
 from lexer.lexer import Lexer
 from lexer.token_kind import TokenKind as Tk

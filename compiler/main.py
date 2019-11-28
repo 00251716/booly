@@ -1,5 +1,7 @@
 from lexer.token import Token
 from parser.parser import Parser
+from ast.literal_expression import LiteralExpression
+from diagnostic.diagnostics import diagnostics
 
 
 def main():
@@ -12,19 +14,17 @@ def main():
             continue
         parser = Parser(text)
         node = parser.parse()
-        if parser.errors:
-            for error in parser.errors:
+        if diagnostics:
+            for error in diagnostics:
                 print(error)
         else:
             pretty_print(node)
+        diagnostics.clear()
 
 
 def pretty_print(node, indent="", is_last=True):
     marker = "└──" if is_last else "├──"
-    line = indent + marker + node.kind.name
-
-    if type(node) is Token and node.value is not None:
-        line += " " + str(node.value)
+    line = indent + marker + str(node)
 
     print(line)
 

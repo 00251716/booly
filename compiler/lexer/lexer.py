@@ -1,5 +1,6 @@
 from .token import Token
 from .token_kind import TokenKind as Tk
+from diagnostic.diagnostics import report_bad_character
 
 
 class Lexer:
@@ -109,6 +110,7 @@ class Lexer:
             return self.read_string()
         else:
             # self.errors.append("ERROR: bad character input: '{}' in line number {}".format(self.current, self.line_number))
+            report_bad_character(self.line_number, self.current)
             return Token(Tk.BadToken, self.current, self.line_number)
 
     def read_whitespace(self):

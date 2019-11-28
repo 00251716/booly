@@ -1,4 +1,5 @@
 from ast.binary_expression import BinaryExpression
+from ast.expression import Expression
 from ast.literal_expression import LiteralExpression
 from ast.not_expression import NotExpression
 from ast.unary_expression import UnaryExpression
@@ -7,6 +8,7 @@ from lexer.token_kind import TokenKind as Tk
 from lexer.token import Token
 from parser.expression_precedence import get_binary_precedence, get_unary_precedence
 from symbol.type import DataType
+from diagnostic.diagnostics import report_unexpected_token, report_unexpected_tokens
 
 class Parser:
     def __init__(self, text):
@@ -49,6 +51,7 @@ class Parser:
             if self.current.kind == kind:
                 return self.get_token_and_move()
             expected_tokens += kind.name + (""  if last_kind == kind else ", ")
+        report_unexpected_tokens(self.current, expected_tokens)
 
     def parse(self):
         return self.parse_expression()
@@ -85,4 +88,5 @@ class Parser:
             self.move()
             return LiteralExpression(current, DataType.Float)
         else:
+            report_unexpected_tokens(self.current, Tk.OpenParenthesisToken.name, Tk.IntToken.name, Tk.FloatToken.name)
             return LiteralExpression(Token(Tk.BadToken, None, self.current.line_number), DataType.Error)

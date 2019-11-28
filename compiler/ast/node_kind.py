@@ -8,3 +8,6 @@ class AstNodeKind(Enum):
     LiteralExpression = 3
     VariableExpression = 4
     NegationExpression = 5
+    AndExpression = 6
+    OrExpression = 7
+    ComparisonExpression = 8

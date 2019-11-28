@@ -6,6 +6,7 @@ from lexer.lexer import Lexer
 from lexer.token_kind import TokenKind as Tk
 from lexer.token import Token
 from parser.expression_precedence import get_binary_precedence, get_unary_precedence
+from symbol.type import DataType
 
 class Parser:
     def __init__(self, text):
@@ -68,3 +69,20 @@ class Parser:
             right = self.parse_expression(precedence)
             left = BinaryExpression(left, operator, right)
         return left
+
+    def factor(self):
+        if self.match(Tk.OpenParenthesisToken):
+            self.move()
+            expression = self.parse_expression()
+            self.match_and_get(Tk.CloseParenthesisToken)
+            return expression
+        elif self.match(Tk.IntToken):
+            current = self.current
+            self.move()
+            return LiteralExpression(current, DataType.Int)
+        elif self.match(Tk.FloatToken):
+            current = self.current
+            self.move()
+            return LiteralExpression(current, DataType.Float)
+        else:
+            return LiteralExpression(Token(Tk.BadToken, None, self.current.line_number), DataType.Error)

@@ -7,3 +7,4 @@ class AstNodeKind(Enum):
     UnaryExpression = 2
     LiteralExpression = 3
     VariableExpression = 4
+    NegationExpression = 5

@@ -10,7 +10,7 @@ class NotExpression(LogicalExpression):
         super().__init__(token, operand, operand)
         if self.data_type == DataType.Error:
             report_undefined_unary_operator(token.lexeme, operand.data_type)
-        self.kind = AstNodeKind.UnaryExpression
+        self.kind = AstNodeKind.NegationExpression
 
     def __str__(self):
         return "{}\tOperator: {}\tResultant data type:{}".format(self.kind.name, self.token.lexeme, self.data_type.name)

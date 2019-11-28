@@ -1,5 +1,6 @@
 from ast.binary_expression import BinaryExpression
 from ast.literal_expression import LiteralExpression
+from ast.not_expression import NotExpression
 from ast.unary_expression import UnaryExpression
 from lexer.lexer import Lexer
 from lexer.token_kind import TokenKind as Tk
@@ -60,7 +61,10 @@ class Parser:
         if unary_precedence != 0:
             operator = self.get_token_and_move()
             operand = self.parse_expression(unary_precedence)
-            left = UnaryExpression(operator, operand)
+            if operator.kind == Tk.BangToken:
+                left = NotExpression(operator, operand)
+            else:
+                left = UnaryExpression(operator, operand)
         else:
             left = self.factor()
         while True:
@@ -86,6 +90,12 @@ class Parser:
             current = self.current
             self.move()
             return LiteralExpression(current, DataType.Float)
+        elif self.match(Tk.TrueKeyword) or self.match(Tk.FalseKeyword):
+            current = self.current
+            current.value = True if current.kind == Tk.TrueKeyword else False
+            self.move()
+            return LiteralExpression(current, DataType.Bool)
         else:
-            report_unexpected_tokens(self.current, Tk.OpenParenthesisToken.name, Tk.IntToken.name, Tk.FloatToken.name)
+            report_unexpected_tokens(self.current, Tk.OpenParenthesisToken.name, Tk.IntToken.name, Tk.FloatToken.name,
+                                     Tk.TrueKeyword.name, Tk.FalseKeyword.name)
             return LiteralExpression(Token(Tk.BadToken, None, self.current.line_number), DataType.Error)

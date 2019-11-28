@@ -1,5 +1,4 @@
 from ast.binary_expression import BinaryExpression
-from ast.expression import Expression
 from ast.literal_expression import LiteralExpression
 from ast.unary_expression import UnaryExpression
 from lexer.lexer import Lexer
@@ -7,7 +6,8 @@ from lexer.token_kind import TokenKind as Tk
 from lexer.token import Token
 from parser.expression_precedence import get_binary_precedence, get_unary_precedence
 from symbol.type import DataType
-from diagnostic.diagnostics import report_unexpected_token, report_unexpected_tokens
+from diagnostic.diagnostics import report_unexpected_tokens
+
 
 class Parser:
     def __init__(self, text):

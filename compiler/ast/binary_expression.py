@@ -1,7 +1,8 @@
 from ast.expression import Expression
-from symbol.type import get_max_data_type
+from symbol.type import get_max_data_type, DataType
 from ast.node_kind import AstNodeKind
 from diagnostic.diagnostics import report_incompatible_types
+
 
 class BinaryExpression(Expression):
     def __init__(self, expr1, operator, expr2):
@@ -9,7 +10,7 @@ class BinaryExpression(Expression):
         self.left = expr1
         self.right = expr2
         self.data_type = get_max_data_type(expr1.data_type, expr2.data_type)
-        if self.data_type is None:
+        if self.data_type is DataType.Error:
             report_incompatible_types(expr1.data_type.name, expr2.data_type.name, operator)
         self.kind = AstNodeKind.BinaryExpression
 
